@@ -1,0 +1,1775 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<meta name="theme-color" content="#1a2744">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Representantes">
+<title>Captura · Representantes de Casilla</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --navy:#1a2744;--navy-d:#0f1829;--red:#c8102e;--red-bg:#fdecea;
+  --green:#1a7a4a;--green-bg:#e8f5ee;--amber:#d97706;--amber-bg:#fef3c7;
+  --purple:#6d28d9;--purple-bg:#ede9fe;
+  --bg:#eef1f8;--surface:#fff;--border:#e2e8f0;
+  --text:#1a2033;--muted:#64748b;--light:#94a3b8;
+  --r:12px;--rs:8px;
+  --fh:'Barlow Condensed',sans-serif;--fb:'Barlow',sans-serif;--fm:'JetBrains Mono',monospace;
+}
+html,body{height:100%;overflow:hidden;background:var(--navy)}
+body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
+#app{display:flex;flex-direction:column;height:100%;max-width:500px;margin:0 auto;background:var(--bg);overflow:hidden}
+
+/* HEADER */
+.hdr{background:var(--navy);padding:env(safe-area-inset-top,0) 0 0;flex-shrink:0}
+.hdr-inner{display:flex;align-items:center;padding:12px 16px;gap:10px}
+.hdr-logo{width:34px;height:34px;background:var(--red);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.hdr-logo svg{width:18px;height:18px}
+.hdr-titles{flex:1;min-width:0}
+.hdr-titles h1{font-family:var(--fh);font-size:17px;font-weight:700;letter-spacing:.2px;line-height:1.1;color:#fff}
+.hdr-titles p{font-size:11px;color:rgba(255,255,255,.55);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sync-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#fff;border-radius:20px;padding:6px 12px;font-size:12px;font-family:var(--fb);font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;flex-shrink:0}
+.sync-btn svg{width:13px;height:13px;flex-shrink:0}
+.sync-btn.spinning svg{animation:spin .7s linear infinite}
+.sync-btn .sbadge{background:var(--red);border-radius:10px;min-width:18px;height:18px;font-size:10px;display:inline-flex;align-items:center;justify-content:center;padding:0 5px;margin-left:2px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.screen-nav{display:flex;background:var(--navy-d);padding:0 4px;overflow-x:auto;scrollbar-width:none;flex-shrink:0}
+.screen-nav::-webkit-scrollbar{display:none}
+.nav-tab{flex:1;min-width:58px;padding:9px 2px 7px;text-align:center;color:rgba(255,255,255,.45);font-size:10px;font-weight:700;font-family:var(--fh);letter-spacing:.6px;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;text-transform:uppercase;white-space:nowrap}
+.nav-tab svg{display:block;margin:0 auto 3px;width:17px;height:17px;opacity:.55}
+.nav-tab.active{color:#fff;border-bottom-color:var(--red)}
+.nav-tab.active svg{opacity:1}
+.screen{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;display:none}
+.screen.active{display:block}
+
+/* DASHBOARD */
+.dash-hero{background:var(--navy);padding:20px 16px 24px;color:#fff;position:relative;overflow:hidden}
+.dash-hero::before{content:'';position:absolute;right:-30px;top:-30px;width:160px;height:160px;border:40px solid rgba(255,255,255,.04);border-radius:50%}
+.dash-muni{font-size:12px;color:rgba(255,255,255,.5);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.dash-totals{display:flex;gap:20px;align-items:flex-end}
+.dash-tot-blk{flex:1}
+.dash-total{font-family:var(--fh);font-size:48px;font-weight:700;line-height:1;color:#fff}
+.dash-total-lbl{font-size:11px;color:rgba(255,255,255,.55);margin-top:2px}
+.dash-tot-blk.gen .dash-total{color:rgba(255,255,255,.75);font-size:36px}
+.stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:16px;margin-top:-10px}
+.stat-card{background:var(--surface);border-radius:var(--rs);padding:14px 10px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.stat-val{font-family:var(--fh);font-size:28px;font-weight:700;line-height:1}
+.stat-val.g{color:var(--green)}.stat-val.a{color:var(--amber)}.stat-val.r{color:var(--red)}
+.stat-lbl{font-size:10px;color:var(--muted);margin-top:3px;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.sync-area{padding:0 16px 8px}
+.big-sync{width:100%;background:var(--navy);color:#fff;border:none;border-radius:var(--rs);padding:15px;font-size:14px;font-weight:600;font-family:var(--fb);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .2s}
+.big-sync.pending{background:var(--red)}
+.sec-lbl{padding:12px 16px 6px;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.cov-list{padding:0 16px}
+.cov-item{background:var(--surface);border-radius:var(--rs);padding:11px 14px;margin-bottom:7px;box-shadow:0 1px 3px rgba(0,0,0,.06);display:flex;align-items:center;gap:10px}
+.cov-sec{font-family:var(--fh);font-size:13px;font-weight:700;background:var(--navy);color:#fff;border-radius:4px;padding:2px 8px;flex-shrink:0}
+.cov-bar-w{flex:1}
+.cov-bar-lbl{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px}
+.cov-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.cov-fill{height:100%;background:var(--green);border-radius:2px;transition:width .4s}
+
+/* ══ SELECTOR TIPO DE CAPTURA ══ */
+.tipo-sel{padding:20px 16px 80px}
+.tipo-sel h2{font-family:var(--fh);font-size:22px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.tipo-sel p{font-size:13px;color:var(--muted);margin-bottom:20px}
+.tipo-card{background:var(--surface);border-radius:var(--r);border:2px solid var(--border);padding:20px 18px;margin-bottom:12px;cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:16px}
+.tipo-card:hover{border-color:var(--navy);transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.tipo-card.cas{border-left:4px solid var(--navy)}
+.tipo-card.gen{border-left:4px solid var(--purple)}
+.tipo-ico{width:48px;height:48px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.tipo-ico.cas{background:#e8edf8}
+.tipo-ico.gen{background:var(--purple-bg)}
+.tipo-ico svg{width:24px;height:24px}
+.tipo-ico.cas svg{color:var(--navy)}
+.tipo-ico.gen svg{color:var(--purple)}
+.tipo-txt h3{font-family:var(--fh);font-size:19px;font-weight:700;color:var(--text);margin-bottom:3px}
+.tipo-txt p{font-size:12px;color:var(--muted);line-height:1.4}
+.tipo-arrow{margin-left:auto;color:var(--light);flex-shrink:0}
+.tipo-arrow svg{width:18px;height:18px}
+
+/* FORM */
+.form-hdr{padding:14px 16px 10px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}
+.form-hdr-top{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.form-hdr h2{font-family:var(--fh);font-size:20px;font-weight:700;color:var(--navy);flex:1}
+.form-badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:10px}
+.form-badge.cas{background:#e8edf8;color:var(--navy)}
+.form-badge.gen{background:var(--purple-bg);color:var(--purple)}
+.form-hdr p{font-size:12px;color:var(--muted)}
+.step-dots{display:flex;gap:6px;margin-top:8px}
+.sdot{width:8px;height:8px;border-radius:4px;background:var(--border);transition:all .25s}
+.sdot.active{width:24px;background:var(--navy)}
+.sdot.active.gen{background:var(--purple)}
+.sdot.done{background:var(--green)}
+.step{display:none;padding:16px 16px 80px}
+.step.active{display:block}
+
+/* FIELDS */
+.fld{margin-bottom:15px}
+.fld label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
+.fld input,.fld select,.fld textarea{width:100%;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--rs);padding:11px 14px;font-size:15px;font-family:var(--fb);color:var(--text);outline:none;transition:border .15s;-webkit-appearance:none;appearance:none}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--navy)}
+.fld input.ok{border-color:var(--green)}.fld input.bad{border-color:var(--red);background:#fff9f9}
+.fld .hint{font-size:11px;color:var(--muted);margin-top:4px}
+.fld .errmsg{font-size:11px;color:var(--red);margin-top:4px;font-weight:600;display:none}
+.fld .errmsg.on{display:block}
+.fld .cnt{font-size:11px;color:var(--light);text-align:right;margin-top:3px;font-family:var(--fm)}
+.fld select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:34px}
+.fld textarea{min-height:75px;resize:vertical}
+
+/* SEARCH */
+.srch-wrap{position:relative}
+.srch-wrap input{padding-left:38px}
+.srch-ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.srch-ico svg{width:15px;height:15px}
+.srch-res{background:var(--surface);border:1.5px solid var(--navy);border-top:none;border-radius:0 0 var(--rs) var(--rs);max-height:190px;overflow-y:auto;display:none;z-index:10;position:relative}
+.srch-res.open{display:block}
+.srch-item{padding:11px 14px;cursor:pointer;font-size:14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.srch-item:last-child{border-bottom:none}
+.srch-item:hover{background:var(--bg)}
+.sec-badge{background:var(--navy);color:#fff;border-radius:4px;padding:2px 8px;font-size:12px;font-weight:700;font-family:var(--fh);flex-shrink:0}
+.srch-item .sub{font-size:11px;color:var(--muted)}
+
+/* SECCIONES SELECCIONADAS (General) */
+.sec-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;min-height:10px}
+.sec-tag{background:var(--purple-bg);color:var(--purple);border-radius:14px;padding:5px 10px;font-size:12px;font-weight:700;font-family:var(--fh);display:flex;align-items:center;gap:5px;cursor:pointer}
+.sec-tag span{font-size:15px;line-height:1}
+.sec-count{font-size:12px;color:var(--muted);margin-top:6px}
+
+/* CASILLA GRID */
+.cas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:7px;margin-top:4px}
+.cas-chip{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--rs);padding:10px 6px;text-align:center;cursor:pointer;transition:all .15s}
+.cas-chip:hover{border-color:var(--navy)}
+.cas-chip.sel{border-color:var(--navy);background:var(--navy);color:#fff}
+.cas-chip.has-local{border-color:var(--amber);border-style:dashed}
+/* Estado global desde Sheets */
+.cas-chip.g-partial{border-color:var(--amber);border-style:solid;border-width:2px}
+.cas-chip.g-full{background:#f1f5f9;border-color:#94a3b8;border-style:solid;border-width:2px;opacity:.75}
+.cas-chip.g-full .cid{color:#64748b}
+.cas-chip.g-full .ctp{color:#94a3b8}
+.cas-chip .cid{font-family:var(--fh);font-size:17px;font-weight:700}
+.cas-chip .ctp{font-size:9px;color:var(--muted);margin-top:1px}
+.cas-chip.sel .ctp{color:rgba(255,255,255,.65)}
+.cas-chip .crep{font-size:9px;color:var(--amber);margin-top:2px}
+.cas-chip .g-ico{font-size:10px;margin-top:2px}
+/* Rol bloqueado */
+.rol-card.bloqueado{opacity:.5;cursor:not-allowed;border-style:dashed}
+.rol-card.bloqueado:hover{border-color:var(--border)}
+.rol-bloq-lbl{font-size:10px;color:var(--red);font-weight:700;margin-top:3px}
+/* Banner estado */
+.estado-bar{display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--surface);border-bottom:1px solid var(--border);font-size:11px;color:var(--muted)}
+.estado-bar .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dot-ok{background:var(--green)}.dot-old{background:var(--amber)}.dot-no{background:var(--light)}
+.estado-bar button{margin-left:auto;background:var(--navy);color:#fff;border:none;border-radius:14px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;flex-shrink:0}
+.estado-bar button svg{width:11px;height:11px}
+.estado-bar button.spin svg{animation:spin .7s linear infinite}
+/* Leyenda */
+.leyenda{display:flex;gap:10px;flex-wrap:wrap;padding:8px 0 4px;font-size:10px;color:var(--muted)}
+.ley-item{display:flex;align-items:center;gap:4px}
+.ley-box{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+.lb-libre{background:var(--surface);border:1.5px solid var(--border)}
+.lb-local{background:var(--surface);border:2px dashed var(--amber)}
+.lb-parcial{background:var(--surface);border:2px solid var(--amber)}
+.lb-llena{background:#f1f5f9;border:2px solid #94a3b8}
+
+/* ROL — solo 2 */
+.rol-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.rol-card{background:var(--surface);border:2px solid var(--border);border-radius:var(--rs);padding:16px 12px;cursor:pointer;transition:all .15s;text-align:center}
+.rol-card:hover{border-color:var(--navy)}
+.rol-card.sel{border-color:var(--navy);background:#f0f4ff}
+.rol-card .rol-ico{width:36px;height:36px;border-radius:8px;background:#e8edf8;display:flex;align-items:center;justify-content:center;margin:0 auto 8px}
+.rol-card .rol-ico svg{width:18px;height:18px;color:var(--navy)}
+.rol-card h4{font-family:var(--fh);font-size:17px;font-weight:700;color:var(--navy)}
+.rol-card p{font-size:11px;color:var(--muted);margin-top:3px}
+
+/* PARTIDO */
+.par-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:7px}
+.par-chip{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--rs);padding:9px 6px;text-align:center;cursor:pointer;font-size:13px;font-weight:700;font-family:var(--fh);transition:all .15s}
+.par-chip:hover{border-color:var(--navy)}
+.par-chip.sel{border-color:var(--navy);background:var(--navy);color:#fff}
+
+/* FOTOS */
+.foto-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+.foto-box{border:2px dashed var(--border);border-radius:var(--rs);overflow:hidden;aspect-ratio:16/10;position:relative;cursor:pointer;transition:border-color .15s;background:var(--bg)}
+.foto-box.has-foto{border-style:solid;border-color:var(--green)}
+.foto-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:6px;padding:12px}
+.foto-placeholder svg{width:22px;height:22px;color:var(--light)}
+.foto-placeholder span{font-size:10px;color:var(--muted);text-align:center;font-weight:600}
+.foto-preview{width:100%;height:100%;object-fit:cover;display:none}
+.foto-preview.show{display:block}
+.foto-lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-bottom:5px}
+.foto-opts{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:5px}
+.foto-opt{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 4px;text-align:center;cursor:pointer;font-size:10px;font-weight:700;color:var(--navy);display:flex;flex-direction:column;align-items:center;gap:3px}
+.foto-opt svg{width:15px;height:15px}
+
+/* CONFIRM CARD */
+.cc{background:var(--surface);border-radius:var(--r);overflow:hidden;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.cc-hdr{background:var(--navy);color:#fff;padding:11px 16px;display:flex;align-items:center;gap:8px}
+.cc-hdr.gen{background:var(--purple)}
+.cc-hdr svg{width:16px;height:16px;flex-shrink:0}
+.cc-hdr h3{font-family:var(--fh);font-size:16px;font-weight:700}
+.cc-row{display:flex;align-items:flex-start;padding:9px 16px;border-bottom:1px solid var(--border);gap:10px}
+.cc-row:last-child{border-bottom:none}
+.cc-lbl{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;min-width:80px;padding-top:2px;flex-shrink:0}
+.cc-val{font-size:14px;font-weight:500;color:var(--text)}
+.cc-val.mono{font-family:var(--fm);font-size:13px;letter-spacing:.3px}
+.fotos-prev{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 16px}
+.fotos-prev img{width:100%;border-radius:6px;object-fit:cover;aspect-ratio:16/10}
+
+/* CTX BANNER */
+.ctx-banner{background:var(--navy);border-radius:var(--rs);padding:10px 14px;margin-bottom:14px;color:#fff;font-size:13px;display:flex;align-items:center;gap:8px}
+.ctx-banner.gen{background:var(--purple)}
+.ctx-banner svg{width:13px;height:13px;opacity:.7;flex-shrink:0}
+.ctx-banner .change{margin-left:auto;opacity:.65;font-size:11px;cursor:pointer}
+.ctx-strong{font-family:var(--fh);font-size:16px;font-weight:700}
+.ok-notice{background:var(--green-bg);border-radius:var(--rs);padding:11px 14px;display:flex;align-items:center;gap:9px;color:var(--green);font-size:13px;font-weight:600;margin-bottom:14px}
+.ok-notice svg{width:17px;height:17px;flex-shrink:0}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:13px 18px;border-radius:var(--rs);font-size:15px;font-weight:600;font-family:var(--fb);border:none;cursor:pointer;transition:all .15s;width:100%}
+.btn svg{width:16px;height:16px;flex-shrink:0}
+.btn-primary{background:var(--navy);color:#fff}
+.btn-primary.gen{background:var(--purple)}
+.btn-secondary{background:var(--surface);color:var(--navy);border:1.5px solid var(--border)}
+.btn-success{background:var(--green);color:#fff}
+.btn-danger{background:var(--red);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-row{display:flex;gap:8px}
+.btn-row .btn{flex:1}
+
+/* REGISTROS */
+.reg-item{background:var(--surface);border-radius:var(--rs);padding:13px;margin:0 16px 8px;box-shadow:0 1px 3px rgba(0,0,0,.06);display:flex;align-items:flex-start;gap:11px}
+.reg-av{width:38px;height:38px;border-radius:19px;background:var(--navy);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;font-family:var(--fh);flex-shrink:0;overflow:hidden}
+.reg-av.gen{background:var(--purple)}
+.reg-av img{width:100%;height:100%;object-fit:cover}
+.reg-info{flex:1;min-width:0}
+.reg-name{font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.reg-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.reg-ine{font-size:10px;color:var(--light);font-family:var(--fm);margin-top:2px}
+.reg-right{flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
+.bp{background:var(--amber-bg);color:var(--amber)}
+.bs{background:var(--green-bg);color:var(--green)}
+.be{background:var(--red-bg);color:var(--red)}
+.bgen{background:var(--purple-bg);color:var(--purple)}
+.cas-lbl{font-size:11px;font-weight:700;font-family:var(--fh);color:var(--muted)}
+.dt-lbl{font-size:10px;color:var(--light)}
+
+/* CONFIG */
+.cfg-s{margin:16px}
+.cfg-card{background:var(--surface);border-radius:var(--r);box-shadow:0 1px 4px rgba(0,0,0,.07);padding:16px;margin-bottom:12px}
+.cfg-card h3{font-family:var(--fh);font-size:16px;font-weight:700;color:var(--navy);margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.cfg-card h3 svg{width:17px;height:17px;color:var(--muted)}
+.cat-status-card{border-radius:var(--rs);padding:12px 14px;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600}
+.cat-status-card.ok{background:var(--green-bg);color:var(--green)}
+.cat-status-card.err{background:var(--red-bg);color:var(--red)}
+.cat-status-card svg{width:18px;height:18px;flex-shrink:0}
+
+/* FILTER BAR */
+.filter-bar{display:flex;gap:7px;padding:11px 16px;overflow-x:auto;scrollbar-width:none;background:var(--surface);border-bottom:1px solid var(--border)}
+.filter-bar::-webkit-scrollbar{display:none}
+.fchip{flex-shrink:0;background:transparent;border:1px solid var(--border);border-radius:15px;padding:5px 13px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .15s}
+.fchip.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+
+/* EMPTY */
+.empty{text-align:center;padding:48px 24px;color:var(--muted)}
+.empty svg{width:44px;height:44px;margin:0 auto 14px;opacity:.25;display:block}
+.empty h3{font-family:var(--fh);font-size:19px;font-weight:700;color:var(--text);margin-bottom:5px}
+.empty p{font-size:13px}
+
+/* GENERALES EN DASHBOARD */
+.gen-list{padding:0 16px}
+.gen-item{background:var(--surface);border-radius:var(--rs);padding:12px 14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.06);border-left:3px solid var(--purple)}
+.gen-item-hdr{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.gen-id{background:var(--purple);color:#fff;border-radius:5px;padding:2px 9px;font-family:var(--fh);font-size:13px;font-weight:700;flex-shrink:0}
+.gen-nombre{font-size:13px;font-weight:600;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gen-partido{font-size:11px;font-weight:700;color:var(--purple);font-family:var(--fh)}
+.gen-tel{font-size:11px;color:var(--muted);font-family:var(--fm)}
+.gen-secs{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.gen-sec-tag{background:var(--purple-bg);color:var(--purple);border-radius:10px;padding:2px 8px;font-size:10px;font-weight:700;font-family:var(--fh)}
+
+/* TOAST / OVERLAY */
+.toast{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 20px);left:50%;transform:translateX(-50%) translateY(16px);background:#1a2033;color:#fff;border-radius:24px;padding:10px 20px;font-size:13px;font-weight:500;opacity:0;transition:all .3s;pointer-events:none;z-index:9999;white-space:nowrap;max-width:90vw}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.ok{background:var(--green)}.toast.err{background:var(--red)}
+.overlay{position:fixed;inset:0;background:rgba(15,24,41,.82);z-index:100;align-items:center;justify-content:center;display:none}
+.overlay.show{display:flex}
+.ov-card{background:var(--surface);border-radius:var(--r);padding:24px 32px;text-align:center}
+.spinner{width:38px;height:38px;border:3px solid var(--border);border-top-color:var(--navy);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px}
+
+/* CONSULTA */
+.consulta-wrap{padding:16px 16px 80px}
+.consulta-hdr{background:var(--navy);border-radius:var(--r);padding:16px;margin-bottom:16px;color:#fff}
+.consulta-hdr h2{font-family:var(--fh);font-size:20px;font-weight:700;margin-bottom:3px}
+.consulta-hdr p{font-size:12px;color:rgba(255,255,255,.55)}
+.consulta-result{margin-top:16px}
+.result-card{background:var(--surface);border-radius:var(--r);overflow:hidden;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.result-hdr{padding:12px 16px;display:flex;align-items:center;gap:10px}
+.result-hdr.libre{background:var(--green-bg)}
+.result-hdr.ocupado{background:var(--navy)}
+.result-hdr.parcial{background:var(--amber-bg)}
+.result-hdr h3{font-family:var(--fh);font-size:17px;font-weight:700}
+.result-hdr.libre h3{color:var(--green)}
+.result-hdr.ocupado h3{color:#fff}
+.result-hdr.parcial h3{color:var(--amber)}
+.result-hdr svg{width:17px;height:17px;flex-shrink:0}
+.result-hdr.libre svg{color:var(--green)}
+.result-hdr.ocupado svg{color:#fff}
+.result-hdr.parcial svg{color:var(--amber)}
+.rep-row{display:flex;align-items:center;padding:11px 16px;border-bottom:1px solid var(--border);gap:12px}
+.rep-row:last-child{border-bottom:none}
+.rep-av{width:36px;height:36px;border-radius:18px;background:var(--navy);color:#fff;font-family:var(--fh);font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.rep-av.sup{background:var(--green)}
+.rep-info{flex:1;min-width:0}
+.rep-nombre{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}
+.rep-rol{font-size:11px;color:var(--muted);margin-top:2px}
+.rep-partido{font-size:11px;font-weight:700;font-family:var(--fh);color:var(--navy);margin-top:1px}
+.rep-tel{font-size:10px;color:var(--light);font-family:var(--fm);margin-top:2px}
+.libre-ico{width:48px;height:48px;border-radius:24px;background:var(--green-bg);display:flex;align-items:center;justify-content:center;margin:0 auto 10px}
+.libre-ico svg{width:24px;height:24px;color:var(--green)}
+.consultando{text-align:center;padding:32px;color:var(--muted);font-size:13px}
+.consultando .mini-spin{width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--navy);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 10px}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- HEADER -->
+<header class="hdr">
+  <div class="hdr-inner">
+    <div class="hdr-logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg>
+    </div>
+    <div class="hdr-titles">
+      <h1>Representantes de Casilla</h1>
+      <p id="hdr-muni">Sin configurar</p>
+    </div>
+    <button class="sync-btn" onclick="syncNow()" id="sync-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      <span class="sbadge" id="sync-badge" style="display:none"></span>
+    </button>
+  </div>
+  <nav class="screen-nav">
+    <div class="nav-tab active" onclick="showScreen('dashboard')" data-sc="dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+      Inicio
+    </div>
+    <div class="nav-tab" onclick="showScreen('captura')" data-sc="captura">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      Captura
+    </div>
+    <div class="nav-tab" onclick="showScreen('registros')" data-sc="registros">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Registros
+    </div>
+    <div class="nav-tab" onclick="showScreen('consulta')" data-sc="consulta">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      Consulta
+    </div>
+    <div class="nav-tab" onclick="showScreen('config')" data-sc="config">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Config
+    </div>
+  </nav>
+</header>
+
+<!-- ══════════ DASHBOARD ══════════ -->
+<div class="screen active" id="screen-dashboard">
+  <div class="dash-hero">
+    <div class="dash-muni" id="dash-muni">Cargando...</div>
+    <div class="dash-totals">
+      <div class="dash-tot-blk">
+        <div class="dash-total" id="dash-total">0</div>
+        <div class="dash-total-lbl">Prop. / Suplentes</div>
+      </div>
+      <div class="dash-tot-blk gen">
+        <div class="dash-total" id="dash-total-gen">0</div>
+        <div class="dash-total-lbl">Generales</div>
+      </div>
+    </div>
+    <div id="dash-global-lbl" style="font-size:11px;color:rgba(255,255,255,.45);margin-top:8px;display:none"></div>
+  </div>
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-val g" id="st-sync">0</div><div class="stat-lbl">Sincronizados</div></div>
+    <div class="stat-card"><div class="stat-val a" id="st-pend">0</div><div class="stat-lbl">Pendientes</div></div>
+    <div class="stat-card"><div class="stat-val r" id="st-err">0</div><div class="stat-lbl">Errores</div></div>
+  </div>
+  <div class="sync-area">
+    <button class="big-sync" id="big-sync" onclick="syncNow()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      <span id="big-sync-lbl">Sincronizar con Google Sheets</span>
+    </button>
+  </div>
+  <div style="padding:8px 16px">
+    <button class="btn btn-secondary" onclick="showScreen('captura')" style="border-color:var(--navy);color:var(--navy)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      Nueva captura
+    </button>
+  </div>
+  <div class="sec-lbl">Cobertura por sección</div>
+  <div class="cov-list" id="cov-list"><div style="padding:28px;text-align:center;font-size:13px;color:var(--muted)">Sin datos aún</div></div>
+  <div class="sec-lbl" id="gen-dash-lbl" style="display:none">Representantes Generales</div>
+  <div class="gen-list" id="gen-dash-list"></div>
+  <div style="height:20px"></div>
+</div>
+
+<!-- ══════════ CAPTURA ══════════ -->
+<div class="screen" id="screen-captura">
+
+  <!-- PANTALLA 0: ELEGIR TIPO -->
+  <div id="tipo-selector" class="tipo-sel">
+    <h2>Nueva Captura</h2>
+    <p>¿Qué tipo de representante vas a registrar?</p>
+
+    <div class="tipo-card cas" onclick="iniciarFlujo('casilla')">
+      <div class="tipo-ico cas">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg>
+      </div>
+      <div class="tipo-txt">
+        <h3>Propietario / Suplente</h3>
+        <p>Asignado a una casilla específica dentro de una sección</p>
+      </div>
+      <div class="tipo-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+    </div>
+
+    <div class="tipo-card gen" onclick="iniciarFlujo('general')">
+      <div class="tipo-ico gen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <div class="tipo-txt">
+        <h3>Representante General</h3>
+        <p>Cubre una o varias secciones completas, sin casilla fija</p>
+      </div>
+      <div class="tipo-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+    </div>
+  </div>
+
+  <!-- FORMULARIO CASILLA (Propietario / Suplente) -->
+  <div id="form-casilla" style="display:none">
+    <div class="form-hdr">
+      <div class="form-hdr-top">
+        <h2>Propietario / Suplente</h2>
+        <span class="form-badge cas">Casilla</span>
+      </div>
+      <p id="cas-step-lbl">Paso 1 de 4 — Sección electoral</p>
+      <div class="step-dots" id="cas-sdots">
+        <div class="sdot active"></div><div class="sdot"></div><div class="sdot"></div><div class="sdot"></div>
+      </div>
+    </div>
+
+    <!-- PASO C1: SECCIÓN -->
+    <div class="step active" id="cs-1">
+      <div class="fld">
+        <label>Sección Electoral</label>
+        <div class="srch-wrap">
+          <div class="srch-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></div>
+          <input type="search" id="c-sec-search" placeholder="Buscar sección..." oninput="searchSec(this.value,'c')" onfocus="openSearch('c')" autocomplete="off" inputmode="numeric">
+        </div>
+        <div class="srch-res" id="c-sec-res"></div>
+      </div>
+      <div id="c-sec-info" style="display:none" class="cc">
+        <div class="cc-hdr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg><h3 id="c-sec-title">—</h3></div>
+        <div class="cc-row"><div class="cc-lbl">Casillas</div><div class="cc-val" id="c-sec-cas-cnt">—</div></div>
+      </div>
+      <div style="margin-top:14px;display:flex;gap:8px">
+        <button class="btn btn-secondary" onclick="volverTipo()">Cancelar</button>
+        <button class="btn btn-primary" onclick="casGoStep(2)" id="c-btn-s1" disabled>Siguiente</button>
+      </div>
+    </div>
+
+    <!-- PASO C2: CASILLA -->
+    <div class="step" id="cs-2">
+      <div class="ctx-banner">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        Sección <span class="ctx-strong" id="c-s2-sec">—</span>
+        <span class="change" onclick="casGoStep(1)">Cambiar</span>
+      </div>
+      <!-- BANNER ESTADO GLOBAL -->
+      <div class="estado-bar" id="estado-bar">
+        <div class="dot dot-no" id="estado-dot"></div>
+        <span id="estado-txt">Sin estado de Sheets</span>
+        <button onclick="descargarEstado()" id="estado-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          Actualizar estado
+        </button>
+      </div>
+      <div class="fld">
+        <label>Selecciona la casilla</label>
+        <!-- LEYENDA -->
+        <div class="leyenda">
+          <div class="ley-item"><div class="ley-box lb-libre"></div>Libre</div>
+          <div class="ley-item"><div class="ley-box lb-local"></div>Capturado local</div>
+          <div class="ley-item"><div class="ley-box lb-parcial"></div>Parcial (Sheets)</div>
+          <div class="ley-item"><div class="ley-box lb-llena"></div>Completa (Sheets)</div>
+        </div>
+        <div class="cas-grid" id="c-cas-grid"></div>
+      </div>
+      <div id="c-cas-info" style="display:none" class="cc">
+        <div class="cc-hdr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><h3 id="c-cas-title">—</h3></div>
+        <div class="cc-row"><div class="cc-lbl">Tipo</div><div class="cc-val" id="c-cas-tipo">—</div></div>
+        <div class="cc-row"><div class="cc-lbl">Registrados</div><div class="cc-val" id="c-cas-reps">—</div></div>
+      </div>
+      <div class="btn-row" style="margin-top:14px">
+        <button class="btn btn-secondary" onclick="casGoStep(1)">Atrás</button>
+        <button class="btn btn-primary" onclick="casGoStep(3)" id="c-btn-s2" disabled>Siguiente</button>
+      </div>
+    </div>
+
+    <!-- PASO C3: DATOS -->
+    <div class="step" id="cs-3">
+      <div class="ctx-banner">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+        Sec <span class="ctx-strong" id="c-s3-sec">—</span>&nbsp;|&nbsp;Casilla <span class="ctx-strong" id="c-s3-cas">—</span>
+        <span style="margin-left:auto;opacity:.6;font-size:11px" id="c-s3-tipo"></span>
+      </div>
+
+      <!-- SOLO 2 ROLES -->
+      <div class="fld">
+        <label>Rol</label>
+        <div class="rol-grid">
+          <div class="rol-card" id="rol-prop" onclick="selRolSiDisponible('PROPIETARIO',this)">
+            <div class="rol-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+            <h4>Propietario</h4>
+            <p>Representante titular</p>
+            <div class="rol-bloq-lbl" id="bloq-prop" style="display:none">Ya asignado en Sheets</div>
+          </div>
+          <div class="rol-card" id="rol-sup" onclick="selRolSiDisponible('SUPLENTE',this)">
+            <div class="rol-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+            <h4>Suplente</h4>
+            <p>Representante alterno</p>
+            <div class="rol-bloq-lbl" id="bloq-sup" style="display:none">Ya asignado en Sheets</div>
+          </div>
+        </div>
+        <div class="errmsg" id="er-rol">Selecciona un rol</div>
+      </div>
+
+      <div class="fld">
+        <label>Partido</label>
+        <div class="par-grid" id="c-par-grid"></div>
+        <div class="errmsg" id="er-par">Selecciona un partido</div>
+      </div>
+
+      <div class="fld"><label>Nombre(s)</label>
+        <input type="text" id="c-nom" placeholder="Como aparece en su INE" oninput="valNom(this)" autocapitalize="characters" autocomplete="off">
+        <div class="errmsg" id="er-cnom">Mínimo 2 caracteres</div>
+      </div>
+      <div class="fld"><label>Apellido Paterno</label>
+        <input type="text" id="c-pat" placeholder="Apellido paterno" oninput="valAp(this,'er-cpat')" autocapitalize="characters">
+        <div class="errmsg" id="er-cpat">Requerido</div>
+      </div>
+      <div class="fld"><label>Apellido Materno <span style="font-weight:400;color:var(--light)">(opcional)</span></label>
+        <input type="text" id="c-mat" autocapitalize="characters">
+      </div>
+      <div class="fld"><label>Clave Elector INE <span style="font-weight:400;color:var(--light)">18 caracteres</span></label>
+        <input type="text" id="c-ine" placeholder="ABCD123456EFGH7801" oninput="valINE(this,'ine-cnt','er-cine')" maxlength="18" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" style="font-family:var(--fm);letter-spacing:.5px;text-transform:uppercase">
+        <div class="cnt" id="ine-cnt">0 / 18</div>
+        <div class="errmsg" id="er-cine">Debe tener exactamente 18 caracteres</div>
+      </div>
+      <div class="fld"><label>Teléfono <span style="font-weight:400;color:var(--light)">10 dígitos</span></label>
+        <input type="tel" id="c-tel" placeholder="5512345678" oninput="valTel(this,'tel-fmt','er-ctel')" maxlength="10" inputmode="numeric">
+        <div class="hint" id="tel-fmt" style="font-family:var(--fm);color:var(--navy);font-weight:500"></div>
+        <div class="errmsg" id="er-ctel">Debe tener 10 dígitos</div>
+      </div>
+
+      <!-- FOTOS -->
+      <div class="fld">
+        <label>Foto credencial INE <span style="font-weight:400;color:var(--light)">(opcional)</span></label>
+        <div class="foto-grid">
+          <div>
+            <div class="foto-lbl">Frente</div>
+            <div class="foto-box" id="foto-box-f">
+              <div class="foto-placeholder" id="foto-ph-f"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="12" cy="12" r="3"/></svg><span>Frente de la credencial</span></div>
+              <img id="foto-prev-f" class="foto-preview" alt="">
+            </div>
+            <div class="foto-opts">
+              <div class="foto-opt" onclick="abrirCamara('frente')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Cámara</div>
+              <div class="foto-opt" onclick="abrirGaleria('frente')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>Galería</div>
+            </div>
+          </div>
+          <div>
+            <div class="foto-lbl">Reverso</div>
+            <div class="foto-box" id="foto-box-r">
+              <div class="foto-placeholder" id="foto-ph-r"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="14" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="7" y1="15" x2="13" y2="15"/></svg><span>Reverso de la credencial</span></div>
+              <img id="foto-prev-r" class="foto-preview" alt="">
+            </div>
+            <div class="foto-opts">
+              <div class="foto-opt" onclick="abrirCamara('reverso')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Cámara</div>
+              <div class="foto-opt" onclick="abrirGaleria('reverso')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>Galería</div>
+            </div>
+          </div>
+        </div>
+        <input type="file" id="inp-camara-frente"  accept="image/*" capture="environment" style="display:none" onchange="procesarFoto(this,'frente')">
+        <input type="file" id="inp-camara-reverso" accept="image/*" capture="environment" style="display:none" onchange="procesarFoto(this,'reverso')">
+        <input type="file" id="inp-galeria-frente"  accept="image/*" style="display:none" onchange="procesarFoto(this,'frente')">
+        <input type="file" id="inp-galeria-reverso" accept="image/*" style="display:none" onchange="procesarFoto(this,'reverso')">
+      </div>
+
+      <div class="fld"><label>Notas <span style="font-weight:400;color:var(--light)">(opcional)</span></label>
+        <textarea id="c-not" placeholder="Disponibilidad, observaciones..."></textarea>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="casGoStep(2)">Atrás</button>
+        <button class="btn btn-primary" onclick="casStep3to4()">Revisar</button>
+      </div>
+    </div>
+
+    <!-- PASO C4: CONFIRMACIÓN -->
+    <div class="step" id="cs-4">
+      <div class="ok-notice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Verifica antes de guardar</div>
+      <div class="cc">
+        <div class="cc-hdr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg><h3>Casilla</h3></div>
+        <div class="cc-row"><div class="cc-lbl">Sección</div><div class="cc-val" id="cv-sec">—</div></div>
+        <div class="cc-row"><div class="cc-lbl">Casilla</div><div class="cc-val" id="cv-cas">—</div></div>
+        <div class="cc-row"><div class="cc-lbl">Tipo</div><div class="cc-val" id="cv-tip">—</div></div>
+        <div class="cc-row"><div class="cc-lbl">Rol</div><div class="cc-val" id="cv-rol">—</div></div>
+      </div>
+      <div class="cc">
+        <div class="cc-hdr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><h3>Representante</h3></div>
+        <div class="cc-row"><div class="cc-lbl">Nombre</div><div class="cc-val" id="cv-nom">—</div></div>
+        <div class="cc-row"><div class="cc-lbl">INE</div><div class="cc-val mono" id="cv-ine">—</div></div>
+        <div class="cc-row"><div class="cc-lbl">Teléfono</div><div class="cc-val mono" id="cv-tel">—</div></div>
+        <div class="cc-row"><div class="cc-lbl">Partido</div><div class="cc-val" id="cv-par">—</div></div>
+        <div class="cc-row" id="cv-not-row" style="display:none"><div class="cc-lbl">Notas</div><div class="cc-val" id="cv-not">—</div></div>
+      </div>
+      <div class="cc" id="cc-fotos" style="display:none">
+        <div class="cc-hdr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><h3>Fotos credencial</h3></div>
+        <div class="fotos-prev">
+          <img id="cv-foto-f" src="" alt="" style="display:none">
+          <img id="cv-foto-r" src="" alt="" style="display:none">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="casGoStep(3)">Editar</button>
+        <button class="btn btn-success" onclick="guardarCasilla()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Guardar registro
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FORMULARIO GENERAL -->
+  <div id="form-general" style="display:none">
+    <div class="form-hdr">
+      <div class="form-hdr-top">
+        <h2>Representante General</h2>
+        <span class="form-badge gen">General</span>
+      </div>
+      <p id="gen-step-lbl">Paso 1 de 3 — Secciones asignadas</p>
+      <div class="step-dots" id="gen-sdots">
+        <div class="sdot active gen"></div><div class="sdot"></div><div class="sdot"></div>
+      </div>
+    </div>
+
+    <!-- PASO G1: SECCIONES (múltiple) -->
+    <div class="step active" id="gs-1">
+      <div class="fld">
+        <label>Secciones asignadas <span style="font-weight:400;color:var(--light)">(una o más)</span></label>
+        <div class="srch-wrap">
+          <div class="srch-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></div>
+          <input type="search" id="g-sec-search" placeholder="Buscar y agregar sección..." oninput="searchSec(this.value,'g')" onfocus="openSearch('g')" autocomplete="off" inputmode="numeric">
+        </div>
+        <div class="srch-res" id="g-sec-res"></div>
+        <div class="sec-tags" id="g-sec-tags"></div>
+        <div class="sec-count" id="g-sec-count">Sin secciones seleccionadas</div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn btn-secondary" onclick="volverTipo()">Cancelar</button>
+        <button class="btn btn-primary gen" onclick="genGoStep(2)" id="g-btn-s1" disabled>Siguiente</button>
+      </div>
+    </div>
+
+    <!-- PASO G2: DATOS -->
+    <div class="step" id="gs-2">
+      <div class="ctx-banner gen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        <span id="g-ctx-secs" style="font-size:12px">—</span>
+        <span class="change" onclick="genGoStep(1)">Cambiar</span>
+      </div>
+
+      <div class="fld">
+        <label>Partido</label>
+        <div class="par-grid" id="g-par-grid"></div>
+        <div class="errmsg" id="er-gpar">Selecciona un partido</div>
+      </div>
+      <div class="fld"><label>Nombre(s)</label>
+        <input type="text" id="g-nom" placeholder="Como aparece en su INE" oninput="valNom(this)" autocapitalize="characters" autocomplete="off">
+        <div class="errmsg" id="er-gnom">Mínimo 2 caracteres</div>
+      </div>
+      <div class="fld"><label>Apellido Paterno</label>
+        <input type="text" id="g-pat" placeholder="Apellido paterno" oninput="valAp(this,'er-gpat')" autocapitalize="characters">
+        <div class="errmsg" id="er-gpat">Requerido</div>
+      </div>
+      <div class="fld"><label>Apellido Materno <span style="font-weight:400;color:var(--light)">(opcional)</span></label>
+        <input type="text" id="g-mat" autocapitalize="characters">
+      </div>
+      <div class="fld"><label>Clave Elector INE <span style="font-weight:400;color:var(--light)">18 caracteres</span></label>
+        <input type="text" id="g-ine" placeholder="ABCD123456EFGH7801" oninput="valINE(this,'g-ine-cnt','er-gine')" maxlength="18" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" style="font-family:var(--fm);letter-spacing:.5px;text-transform:uppercase">
+        <div class="cnt" id="g-ine-cnt">0 / 18</div>
+        <div class="errmsg" id="er-gine">Debe tener exactamente 18 caracteres</div>
+      </div>
+      <div class="fld"><label>Teléfono <span style="font-weight:400;color:var(--light)">10 dígitos</span></label>
+        <input type="tel" id="g-tel" placeholder="5512345678" oninput="valTel(this,'g-tel-fmt','er-gtel')" maxlength="10" inputmode="numeric">
+        <div class="hint" id="g-tel-fmt" style="font-family:var(--fm);color:var(--purple);font-weight:500"></div>
+        <div class="errmsg" id="er-gtel">Debe tener 10 dígitos</div>
+      </div>
+      <div class="fld"><label>Notas <span style="font-weight:400;color:var(--light)">(opcional)</span></label>
+        <textarea id="g-not" placeholder="Zona que cubre, disponibilidad..."></textarea>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="genGoStep(1)">Atrás</button>
+        <button class="btn btn-primary gen" onclick="genStep2to3()">Revisar</button>
+      </div>
+    </div>
+
+    <!-- PASO G3: CONFIRMACIÓN -->
+    <div class="step" id="gs-3">
+      <div class="ok-notice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Verifica antes de guardar</div>
+      <div class="cc">
+        <div class="cc-hdr gen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><h3>Representante General</h3></div>
+        <div class="cc-row"><div class="cc-lbl">Secciones</div><div class="cc-val" id="gv-secs">—</div></div>
+        <div class="cc-row"><div class="cc-lbl">Partido</div><div class="cc-val" id="gv-par">—</div></div>
+      </div>
+      <div class="cc">
+        <div class="cc-hdr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><h3>Datos personales</h3></div>
+        <div class="cc-row"><div class="cc-lbl">Nombre</div><div class="cc-val" id="gv-nom">—</div></div>
+        <div class="cc-row"><div class="cc-lbl">INE</div><div class="cc-val mono" id="gv-ine">—</div></div>
+        <div class="cc-row"><div class="cc-lbl">Teléfono</div><div class="cc-val mono" id="gv-tel">—</div></div>
+        <div class="cc-row" id="gv-not-row" style="display:none"><div class="cc-lbl">Notas</div><div class="cc-val" id="gv-not">—</div></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="genGoStep(2)">Editar</button>
+        <button class="btn btn-success" onclick="guardarGeneral()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Guardar General
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ REGISTROS ══════════ -->
+<div class="screen" id="screen-registros">
+  <div class="filter-bar">
+    <div class="fchip active" onclick="filt('all',this)">Todos</div>
+    <div class="fchip" onclick="filt('casilla',this)">Prop/Suplente</div>
+    <div class="fchip" onclick="filt('general',this)">Generales</div>
+    <div class="fchip" onclick="filt('pending',this)">Pendientes</div>
+    <div class="fchip" onclick="filt('synced',this)">Sincronizados</div>
+  </div>
+  <div id="reg-list" style="padding-top:8px;padding-bottom:20px"></div>
+</div>
+
+<!-- ══════════ CONFIG ══════════ -->
+<div class="screen" id="screen-config">
+  <div class="cfg-s">
+    <div class="cfg-card">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>Municipio</h3>
+      <div class="fld"><label>Nombre del municipio</label><input type="text" id="cfg-muni" placeholder="Ej. San Andrés Cholula" oninput="saveCfg()"></div>
+      <div class="fld"><label>Capturista</label><input type="text" id="cfg-cap" placeholder="Nombre del capturista" oninput="saveCfg()"></div>
+    </div>
+    <div class="cfg-card">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Sincronización</h3>
+      <div class="fld"><label>URL del Apps Script</label><input type="url" id="cfg-url" placeholder="https://script.google.com/macros/s/…/exec" oninput="saveCfg()"></div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="testConn()" style="margin-top:6px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Probar
+        </button>
+        <button class="btn btn-primary" onclick="descargarCatalogo()" style="margin-top:6px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Actualizar catálogo
+        </button>
+      </div>
+    </div>
+    <div class="cfg-card">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>Catálogo de Casillas</h3>
+      <div id="cat-status-wrap"></div>
+    </div>
+    <div class="cfg-card">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>Partidos</h3>
+      <div class="fld"><label>Separados por coma</label><textarea id="cfg-par" style="min-height:55px" oninput="saveCfg()"></textarea></div>
+    </div>
+    <div class="cfg-card" style="border-left:3px solid var(--red)">
+      <h3 style="color:var(--red)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Datos locales</h3>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="exportJSON()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Exportar JSON</button>
+        <button class="btn btn-danger" onclick="clearAll()">Borrar todo</button>
+      </div>
+      <div style="margin-top:8px">
+        <button class="btn btn-secondary" onclick="recuperarDeSheets()" style="border-color:var(--green);color:var(--green)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          Recuperar registros de Sheets
+        </button>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px">Usa esto si borraste los datos locales por error — descarga todo desde Google Sheets</div>
+    </div>
+    <div style="height:20px"></div>
+  </div>
+</div>
+
+<!-- ══════════ CONSULTA ══════════ -->
+<div class="screen" id="screen-consulta">
+  <div class="consulta-wrap">
+    <div class="consulta-hdr">
+      <h2>Consulta de Casilla</h2>
+      <p>Busca quién está asignado a cualquier casilla en Sheets</p>
+    </div>
+
+    <div class="fld">
+      <label>Sección Electoral</label>
+      <div class="srch-wrap">
+        <div class="srch-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></div>
+        <input type="search" id="q-sec-search" placeholder="Buscar sección..." oninput="searchSec(this.value,'q')" onfocus="openSearch('q')" autocomplete="off" inputmode="numeric">
+      </div>
+      <div class="srch-res" id="q-sec-res"></div>
+    </div>
+
+    <div class="fld" id="q-cas-fld" style="display:none">
+      <label>Casilla</label>
+      <div class="cas-grid" id="q-cas-grid"></div>
+    </div>
+
+    <button class="btn btn-primary" id="q-btn-consultar" onclick="consultarCasilla()" disabled style="margin-top:4px">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      Consultar en Sheets
+    </button>
+
+    <div class="consulta-result" id="q-result"></div>
+  </div>
+</div>
+
+</div><!-- cierre #app -->
+<div class="overlay" id="overlay"><div class="ov-card"><div class="spinner"></div><p id="ov-msg" style="font-size:13px;color:var(--muted)">Procesando...</p></div></div>
+
+<script>
+// ══════════════════════════════════════════
+// ESTADO
+// ══════════════════════════════════════════
+const S={
+  // casilla
+  cStep:1, cSeccion:null, cCasilla:null, cRol:null, cPartido:null,
+  fotoFrente:null, fotoReverso:null,
+  // general
+  gStep:1, gSecciones:[], gPartido:null,
+  // común
+  catalogo:[], registros:[], filtro:'all',
+  // estado global desde Sheets
+  estadoGlobal:[], generalesGlobal:[], estadoTs:null,
+  cfg:{municipio:'',capturista:'',scriptUrl:'',partidos:'MORENA'}
+};
+
+// ══════════════════════════════════════════
+// INDEXEDDB
+// ══════════════════════════════════════════
+let DB;
+function openDB(){
+  return new Promise((res,rej)=>{
+    const r=indexedDB.open('rep_casillas_v4',1);
+    r.onupgradeneeded=e=>{
+      const d=e.target.result;
+      if(!d.objectStoreNames.contains('registros')) d.createObjectStore('registros',{keyPath:'id',autoIncrement:true});
+      if(!d.objectStoreNames.contains('config'))    d.createObjectStore('config',{keyPath:'k'});
+      if(!d.objectStoreNames.contains('catalogo'))  d.createObjectStore('catalogo',{keyPath:'id'});
+    };
+    r.onsuccess=e=>{DB=e.target.result;res()};
+    r.onerror=()=>rej(r.error);
+  });
+}
+function tx(s,m='readonly'){return DB.transaction(s,m).objectStore(s)}
+function dbAll(s){return new Promise((res,rej)=>{const r=tx(s).getAll();r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
+function dbPut(s,o){return new Promise((res,rej)=>{const r=tx(s,'readwrite').put(o);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
+function dbClear(s){return new Promise((res,rej)=>{const r=tx(s,'readwrite').clear();r.onsuccess=()=>res();r.onerror=()=>rej(r.error)})}
+
+// ══════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════
+async function loadCfg(){
+  const items=await dbAll('config');
+  items.forEach(i=>S.cfg[i.k]=i.v);
+  document.getElementById('cfg-muni').value=S.cfg.municipio||'';
+  document.getElementById('cfg-cap').value=S.cfg.capturista||'';
+  document.getElementById('cfg-url').value=S.cfg.scriptUrl||'';
+  document.getElementById('cfg-par').value=S.cfg.partidos||'MORENA';
+  refreshHdr();
+}
+async function saveCfg(){
+  S.cfg.municipio=document.getElementById('cfg-muni').value.trim();
+  S.cfg.capturista=document.getElementById('cfg-cap').value.trim();
+  S.cfg.scriptUrl=document.getElementById('cfg-url').value.trim();
+  S.cfg.partidos=document.getElementById('cfg-par').value.trim();
+  for(const[k,v]of Object.entries(S.cfg)) await dbPut('config',{k,v});
+  refreshHdr();
+}
+function refreshHdr(){
+  const m=S.cfg.municipio||'Sin configurar';
+  document.getElementById('hdr-muni').textContent=m;
+  document.getElementById('dash-muni').textContent=m;
+}
+function parsePars(){return(S.cfg.partidos||'').split(',').map(p=>p.trim()).filter(Boolean)}
+
+// ══════════════════════════════════════════
+// CATÁLOGO
+// ══════════════════════════════════════════
+async function loadCatalogo(){S.catalogo=await dbAll('catalogo');updateCatStatus();}
+async function descargarCatalogo(){
+  if(!S.cfg.scriptUrl){toast('Configura la URL del Script primero','err');return;}
+  if(!navigator.onLine){toast('Sin conexión','err');return;}
+  showOv('Descargando catálogo...');
+  try{
+    const resp=await fetch(S.cfg.scriptUrl+'?action=catalogo');
+    const data=await resp.json();
+    if(!data.casillas?.length){hideOv();toast('El Script no devolvió casillas','err');return;}
+    await dbClear('catalogo');
+    for(const c of data.casillas) await dbPut('catalogo',{id:`${c.seccion}-${c.id_casilla}`,seccion:String(c.seccion),id_casilla:String(c.id_casilla),tipo_casilla:String(c.tipo_casilla||'BASICA').toUpperCase()});
+    await loadCatalogo();
+    hideOv();toast(`✓ ${data.casillas.length} casillas actualizadas`,'ok');
+  }catch(e){hideOv();toast('Error al descargar catálogo','err');}
+}
+function updateCatStatus(){
+  const secs=[...new Set(S.catalogo.map(r=>r.seccion))].length,cas=S.catalogo.length;
+  const w=document.getElementById('cat-status-wrap');if(!w)return;
+  w.innerHTML=cas===0
+    ?`<div class="cat-status-card err"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Sin catálogo — toca "Actualizar catálogo"</div>`
+    :`<div class="cat-status-card ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>${secs} secciones · ${cas} casillas</div>`;
+}
+
+// ══════════════════════════════════════════
+// TIPO DE FLUJO
+// ══════════════════════════════════════════
+function iniciarFlujo(tipo){
+  document.getElementById('tipo-selector').style.display='none';
+  if(tipo==='casilla'){document.getElementById('form-casilla').style.display='block';}
+  else{document.getElementById('form-general').style.display='block';renderGPar();}
+}
+function volverTipo(){
+  document.getElementById('tipo-selector').style.display='block';
+  document.getElementById('form-casilla').style.display='none';
+  document.getElementById('form-general').style.display='none';
+  resetCasilla();resetGeneral();
+}
+
+// ══════════════════════════════════════════
+// FLUJO CASILLA
+// ══════════════════════════════════════════
+const CAS_LABELS=['','Paso 1 de 4 — Sección electoral','Paso 2 de 4 — Casilla','Paso 3 de 4 — Datos','Paso 4 de 4 — Confirmación'];
+function casGoStep(n){
+  if(n===2&&!S.cSeccion){toast('Selecciona una sección','err');return;}
+  if(n===3&&!S.cCasilla){toast('Selecciona una casilla','err');return;}
+  document.getElementById(`cs-${S.cStep}`).classList.remove('active');
+  S.cStep=n;
+  document.getElementById(`cs-${n}`).classList.add('active');
+  document.getElementById('cas-step-lbl').textContent=CAS_LABELS[n];
+  document.querySelectorAll('#cas-sdots .sdot').forEach((d,i)=>{d.classList.remove('active','done');if(i===n-1)d.classList.add('active');else if(i<n-1)d.classList.add('done');});
+  if(n===2)renderCasGrid();
+  if(n===3){document.getElementById('c-s3-sec').textContent=S.cSeccion.seccion;document.getElementById('c-s3-cas').textContent=S.cCasilla.id_casilla;document.getElementById('c-s3-tipo').textContent=S.cCasilla.tipo_casilla;renderCPar();}
+  if(n===4)renderCasConfirm();
+  document.getElementById('screen-captura').scrollTo(0,0);
+}
+function casStep3to4(){
+  let ok=true;
+  if(!S.cRol){document.getElementById('er-rol').classList.add('on');ok=false;}
+  if(!S.cPartido){document.getElementById('er-par').classList.add('on');ok=false;}
+  const nom=document.getElementById('c-nom'),pat=document.getElementById('c-pat'),ine=document.getElementById('c-ine'),tel=document.getElementById('c-tel');
+  if(nom.value.trim().length<2){nom.classList.add('bad');document.getElementById('er-cnom').classList.add('on');ok=false;}
+  if(pat.value.trim().length<2){pat.classList.add('bad');document.getElementById('er-cpat').classList.add('on');ok=false;}
+  if(ine.value.trim().length!==18){ine.classList.add('bad');document.getElementById('er-cine').classList.add('on');ok=false;}
+  if(tel.value.replace(/\D/g,'').length!==10){tel.classList.add('bad');document.getElementById('er-ctel').classList.add('on');ok=false;}
+  if(ok)casGoStep(4);else toast('Corrige los campos marcados','err');
+}
+function renderCasConfirm(){
+  const tel=document.getElementById('c-tel').value.replace(/\D/g,'');
+  document.getElementById('cv-sec').textContent=S.cSeccion.seccion;
+  document.getElementById('cv-cas').textContent=S.cCasilla.id_casilla;
+  document.getElementById('cv-tip').textContent=S.cCasilla.tipo_casilla;
+  document.getElementById('cv-rol').textContent=S.cRol;
+  document.getElementById('cv-nom').textContent=[document.getElementById('c-nom').value,document.getElementById('c-pat').value,document.getElementById('c-mat').value].filter(v=>v.trim()).join(' ').toUpperCase();
+  document.getElementById('cv-ine').textContent=document.getElementById('c-ine').value.toUpperCase();
+  document.getElementById('cv-tel').textContent=`${tel.slice(0,2)}-${tel.slice(2,6)}-${tel.slice(6)}`;
+  document.getElementById('cv-par').textContent=S.cPartido;
+  const n=document.getElementById('c-not').value.trim();
+  document.getElementById('cv-not').textContent=n;
+  document.getElementById('cv-not-row').style.display=n?'flex':'none';
+  const cc=document.getElementById('cc-fotos');
+  if(S.fotoFrente||S.fotoReverso){
+    cc.style.display='block';
+    const ff=document.getElementById('cv-foto-f'),fr=document.getElementById('cv-foto-r');
+    if(S.fotoFrente){ff.src=S.fotoFrente;ff.style.display='block';}else ff.style.display='none';
+    if(S.fotoReverso){fr.src=S.fotoReverso;fr.style.display='block';}else fr.style.display='none';
+  }else cc.style.display='none';
+}
+async function guardarCasilla(){
+  const nom=document.getElementById('c-nom').value.trim().toUpperCase();
+  const pat=document.getElementById('c-pat').value.trim().toUpperCase();
+  const mat=document.getElementById('c-mat').value.trim().toUpperCase();
+  const ine=document.getElementById('c-ine').value.trim().toUpperCase();
+  const tel=document.getElementById('c-tel').value.replace(/\D/g,'');
+  const not=document.getElementById('c-not').value.trim();
+  const telF=`${tel.slice(0,2)}-${tel.slice(2,6)}-${tel.slice(6)}`;
+  if(S.registros.some(r=>r.tipo_reg==='casilla'&&String(r.seccion)===String(S.cSeccion.seccion)&&r.id_casilla===S.cCasilla.id_casilla&&r.rol===S.cRol&&r.partido===S.cPartido)){toast('⚠ Ya existe ese rol/partido en esta casilla','err');return;}
+  if(S.registros.some(r=>r.ine===ine)){toast('⚠ Clave INE ya registrada','err');return;}
+  const reg={tipo_reg:'casilla',seccion:S.cSeccion.seccion,id_casilla:S.cCasilla.id_casilla,tipo_casilla:S.cCasilla.tipo_casilla,nombre:`${nom} ${pat} ${mat}`.trim(),nombre_p:nom,ap_pat:pat,ap_mat:mat,ine,telefono:telF,rol:S.cRol,partido:S.cPartido,notas:not,foto_frente:S.fotoFrente||null,foto_reverso:S.fotoReverso||null,capturado_por:S.cfg.capturista||'Anónimo',timestamp:new Date().toISOString(),synced:false,sync_error:null};
+  await dbPut('registros',reg);
+  await loadReg();
+  toast('✓ Registro guardado','ok');
+  resetCasilla();volverTipo();showScreen('registros');
+  syncOne(reg);
+}
+function resetCasilla(){
+  S.cStep=1;S.cSeccion=null;S.cCasilla=null;S.cRol=null;S.cPartido=null;S.fotoFrente=null;S.fotoReverso=null;
+  ['c-nom','c-pat','c-mat','c-ine','c-tel','c-not'].forEach(id=>{const el=document.getElementById(id);if(el){el.value='';el.classList.remove('ok','bad');}});
+  document.getElementById('c-sec-search').value='';
+  document.getElementById('c-sec-res').classList.remove('open');
+  document.getElementById('c-sec-info').style.display='none';
+  document.getElementById('c-btn-s1').disabled=true;
+  document.getElementById('ine-cnt').textContent='0 / 18';
+  document.getElementById('tel-fmt').textContent='';
+  document.querySelectorAll('#form-casilla .errmsg').forEach(e=>e.classList.remove('on'));
+  document.querySelectorAll('.rol-card').forEach(c=>c.classList.remove('sel'));
+  ['f','r'].forEach(l=>{document.getElementById(`foto-prev-${l}`).classList.remove('show');document.getElementById(`foto-prev-${l}`).src='';document.getElementById(`foto-ph-${l}`).style.display='';document.getElementById(`foto-box-${l}`).classList.remove('has-foto');});
+  document.querySelectorAll('#form-casilla .step').forEach(s=>s.classList.remove('active'));
+  document.getElementById('cs-1').classList.add('active');
+  document.querySelectorAll('#cas-sdots .sdot').forEach((d,i)=>{d.classList.remove('active','done');if(i===0)d.classList.add('active');});
+  document.getElementById('cas-step-lbl').textContent=CAS_LABELS[1];
+}
+
+// ══════════════════════════════════════════
+// FLUJO GENERAL
+// ══════════════════════════════════════════
+const GEN_LABELS=['','Paso 1 de 3 — Secciones asignadas','Paso 2 de 3 — Datos del representante','Paso 3 de 3 — Confirmación'];
+function genGoStep(n){
+  if(n===2&&S.gSecciones.length===0){toast('Agrega al menos una sección','err');return;}
+  document.getElementById(`gs-${S.gStep}`).classList.remove('active');
+  S.gStep=n;
+  document.getElementById(`gs-${n}`).classList.add('active');
+  document.getElementById('gen-step-lbl').textContent=GEN_LABELS[n];
+  document.querySelectorAll('#gen-sdots .sdot').forEach((d,i)=>{d.classList.remove('active','done');if(i===n-1)d.classList.add('active');else if(i<n-1)d.classList.add('done');});
+  if(n===2)document.getElementById('g-ctx-secs').textContent=`Secciones: ${S.gSecciones.join(', ')}`;
+  if(n===3)renderGenConfirm();
+  document.getElementById('screen-captura').scrollTo(0,0);
+}
+function addGenSec(sec){
+  if(S.gSecciones.includes(sec)){toast('Sección ya agregada','');return;}
+  S.gSecciones.push(sec);
+  renderGenTags();
+  document.getElementById('g-sec-search').value='';
+  document.getElementById('g-sec-res').classList.remove('open');
+  document.getElementById('g-btn-s1').disabled=S.gSecciones.length===0;
+}
+function removeGenSec(sec){S.gSecciones=S.gSecciones.filter(s=>s!==sec);renderGenTags();document.getElementById('g-btn-s1').disabled=S.gSecciones.length===0;}
+function renderGenTags(){
+  const cont=document.getElementById('g-sec-tags');
+  cont.innerHTML=S.gSecciones.map(s=>`<div class="sec-tag" onclick="removeGenSec('${s}')"><span>✕</span>${s}</div>`).join('');
+  const n=S.gSecciones.length;
+  document.getElementById('g-sec-count').textContent=n===0?'Sin secciones seleccionadas':`${n} sección${n>1?'es':''} seleccionada${n>1?'s':''}`;
+}
+function genStep2to3(){
+  let ok=true;
+  if(!S.gPartido){document.getElementById('er-gpar').classList.add('on');ok=false;}
+  const nom=document.getElementById('g-nom'),pat=document.getElementById('g-pat'),ine=document.getElementById('g-ine'),tel=document.getElementById('g-tel');
+  if(nom.value.trim().length<2){nom.classList.add('bad');document.getElementById('er-gnom').classList.add('on');ok=false;}
+  if(pat.value.trim().length<2){pat.classList.add('bad');document.getElementById('er-gpat').classList.add('on');ok=false;}
+  if(ine.value.trim().length!==18){ine.classList.add('bad');document.getElementById('er-gine').classList.add('on');ok=false;}
+  if(tel.value.replace(/\D/g,'').length!==10){tel.classList.add('bad');document.getElementById('er-gtel').classList.add('on');ok=false;}
+  if(ok)genGoStep(3);else toast('Corrige los campos marcados','err');
+}
+function renderGenConfirm(){
+  const tel=document.getElementById('g-tel').value.replace(/\D/g,'');
+  document.getElementById('gv-secs').textContent=S.gSecciones.join(', ');
+  document.getElementById('gv-par').textContent=S.gPartido;
+  document.getElementById('gv-nom').textContent=[document.getElementById('g-nom').value,document.getElementById('g-pat').value,document.getElementById('g-mat').value].filter(v=>v.trim()).join(' ').toUpperCase();
+  document.getElementById('gv-ine').textContent=document.getElementById('g-ine').value.toUpperCase();
+  document.getElementById('gv-tel').textContent=`${tel.slice(0,2)}-${tel.slice(2,6)}-${tel.slice(6)}`;
+  const n=document.getElementById('g-not').value.trim();
+  document.getElementById('gv-not').textContent=n;
+  document.getElementById('gv-not-row').style.display=n?'flex':'none';
+}
+async function guardarGeneral(){
+  const nom=document.getElementById('g-nom').value.trim().toUpperCase();
+  const pat=document.getElementById('g-pat').value.trim().toUpperCase();
+  const mat=document.getElementById('g-mat').value.trim().toUpperCase();
+  const ine=document.getElementById('g-ine').value.trim().toUpperCase();
+  const tel=document.getElementById('g-tel').value.replace(/\D/g,'');
+  const not=document.getElementById('g-not').value.trim();
+  const telF=`${tel.slice(0,2)}-${tel.slice(2,6)}-${tel.slice(6)}`;
+
+  // Validar INE duplicada
+  if(S.registros.some(r=>r.ine===ine)){toast('⚠ Clave INE ya registrada','err');return;}
+
+  // Validar sección única — una sección solo puede tener UN general
+  const secsOcupadas=[];
+  for(const sec of S.gSecciones){
+    // Revisar en locales
+    const enLocal=S.registros.some(r=>r.tipo_reg==='general'&&r.secciones&&r.secciones.includes(sec));
+    // Revisar en Sheets (generalesGlobal)
+    const enSheets=S.generalesGlobal.some(g=>g.secciones&&g.secciones.includes(sec));
+    if(enLocal||enSheets) secsOcupadas.push(sec);
+  }
+  if(secsOcupadas.length>0){
+    toast(`⚠ Sección(es) ya asignadas: ${secsOcupadas.join(', ')}`, 'err');
+    return;
+  }
+
+  const reg={
+    tipo_reg:'general', secciones:S.gSecciones,
+    nombre:`${nom} ${pat} ${mat}`.trim(), nombre_p:nom, ap_pat:pat, ap_mat:mat,
+    ine, telefono:telF, partido:S.gPartido, notas:not,
+    capturado_por:S.cfg.capturista||'Anónimo',
+    timestamp:new Date().toISOString(), synced:false, sync_error:null
+  };
+  await dbPut('registros',reg);
+  await loadReg();
+  toast('✓ General guardado','ok');
+  resetGeneral();volverTipo();showScreen('registros');
+  syncOne(reg);
+}
+function resetGeneral(){
+  S.gStep=1;S.gSecciones=[];S.gPartido=null;
+  ['g-nom','g-pat','g-mat','g-ine','g-tel','g-not'].forEach(id=>{const el=document.getElementById(id);if(el){el.value='';el.classList.remove('ok','bad');}});
+  document.getElementById('g-sec-search').value='';
+  document.getElementById('g-sec-res').classList.remove('open');
+  document.getElementById('g-sec-tags').innerHTML='';
+  document.getElementById('g-sec-count').textContent='Sin secciones seleccionadas';
+  document.getElementById('g-btn-s1').disabled=true;
+  document.getElementById('g-ine-cnt').textContent='0 / 18';
+  document.getElementById('g-tel-fmt').textContent='';
+  document.querySelectorAll('#form-general .errmsg').forEach(e=>e.classList.remove('on'));
+  document.querySelectorAll('#gen-sdots .sdot').forEach((d,i)=>{d.classList.remove('active','done');if(i===0)d.classList.add('active');});
+  document.getElementById('gen-step-lbl').textContent=GEN_LABELS[1];
+  document.querySelectorAll('#form-general .step').forEach(s=>s.classList.remove('active'));
+  document.getElementById('gs-1').classList.add('active');
+}
+
+// ══════════════════════════════════════════
+// BÚSQUEDA DE SECCIÓN (compartida)
+// ══════════════════════════════════════════
+function searchSec(q,prefijo){
+  q=q.trim();
+  const resId=`${prefijo}-sec-res`;
+  const r=document.getElementById(resId);
+  if(!q){r.classList.remove('open');return;}
+  const secs=[...new Map(S.catalogo.map(c=>[c.seccion,c])).values()];
+  const found=secs.filter(s=>String(s.seccion).includes(q)).slice(0,12);
+  if(!found.length){r.innerHTML=`<div class="srch-item" style="color:var(--muted)">Sin resultados</div>`;r.classList.add('open');return;}
+
+  // Secciones con general asignado (local + Sheets)
+  const secsConGen=new Set([
+    ...S.registros.filter(r=>r.tipo_reg==='general').flatMap(g=>g.secciones||[]),
+    ...S.generalesGlobal.flatMap(g=>g.secciones||[])
+  ]);
+
+  r.innerHTML=found.map(s=>{
+    const n=S.catalogo.filter(c=>c.seccion===s.seccion).length;
+    const tieneGen=secsConGen.has(s.seccion);
+    const genTag=tieneGen?`<span style="background:var(--purple-bg);color:var(--purple);font-size:10px;font-weight:700;padding:1px 7px;border-radius:8px;font-family:var(--fh)">GEN</span>`:'';
+    let fn;
+    if(prefijo==='g') fn=`addGenSec('${s.seccion}')`;
+    else if(prefijo==='q') fn=`selQSec('${s.seccion}')`;
+    else fn=`selCSec('${s.seccion}')`;
+    return`<div class="srch-item" onclick="${fn}">
+      <span class="sec-badge" style="${tieneGen?'background:var(--purple)':''}">${s.seccion}</span>
+      <span class="sub">${n} casilla${n>1?'s':''}</span>
+      ${genTag}
+    </div>`;
+  }).join('');
+  r.classList.add('open');
+}
+function openSearch(prefijo){
+  if(!S.catalogo.length){toast('Descarga el catálogo desde Config','err');return;}
+  const inp=document.getElementById(`${prefijo}-sec-search`);
+  searchSec(inp?inp.value:'',prefijo);
+}
+function selCSec(sec){
+  S.cSeccion={seccion:sec};
+  document.getElementById('c-sec-search').value=sec;
+  document.getElementById('c-sec-res').classList.remove('open');
+  const n=S.catalogo.filter(c=>c.seccion===sec).length;
+  document.getElementById('c-sec-info').style.display='block';
+  document.getElementById('c-sec-title').textContent=`Sección ${sec}`;
+  document.getElementById('c-sec-cas-cnt').textContent=`${n} casilla${n>1?'s':''}`;
+  document.getElementById('c-btn-s1').disabled=false;
+}
+
+// ══════════════════════════════════════════
+// ESTADO GLOBAL DESDE SHEETS
+// ══════════════════════════════════════════
+async function descargarEstado(){
+  if(!S.cfg.scriptUrl){toast('Configura la URL del Script primero','err');return;}
+  if(!navigator.onLine){toast('Sin conexión a internet','err');return;}
+  const btn=document.getElementById('estado-btn');
+  if(btn) btn.classList.add('spin');
+  try{
+    const resp=await fetch(S.cfg.scriptUrl+'?action=estado');
+    const data=await resp.json();
+    if(data.status==='OK'){
+      S.estadoGlobal   = data.registros   || [];
+      S.generalesGlobal= data.generales   || [];
+      S.estadoTs=new Date();
+      actualizarBannerEstado();
+      if(S.cSeccion) renderCasGrid();
+      if(S.cCasilla) actualizarRolesGlobal();
+      updateDash();
+      toast(`✓ Estado: ${S.estadoGlobal.length} rep · ${S.generalesGlobal.length} generales`,'ok');
+    }else{
+      toast('Error: '+data.message,'err');
+    }
+  }catch(e){
+    toast('Sin conexión o error en el Script','err');
+  }finally{
+    if(btn) btn.classList.remove('spin');
+  }
+}
+
+function actualizarBannerEstado(){
+  const dot=document.getElementById('estado-dot');
+  const txt=document.getElementById('estado-txt');
+  if(!dot||!txt) return;
+  if(!S.estadoTs){
+    dot.className='dot dot-no';
+    txt.textContent='Sin estado de Sheets — toca Actualizar';
+  }else{
+    const mins=Math.round((new Date()-S.estadoTs)/60000);
+    dot.className='dot dot-ok';
+    txt.textContent=`Sheets: ${S.estadoGlobal.length} reg. · hace ${mins<1?'<1':mins} min`;
+  }
+}
+
+// Obtener registros globales de una casilla específica
+function getEstadoCasilla(seccion, id_casilla){
+  return S.estadoGlobal.filter(r=>
+    String(r.seccion)===String(seccion) &&
+    String(r.id_casilla)===String(id_casilla)
+  );
+}
+
+// Actualizar visual de roles según estado global de la casilla seleccionada
+function actualizarRolesGlobal(){
+  if(!S.cCasilla) return;
+  const regsGlobal=getEstadoCasilla(S.cCasilla.seccion, S.cCasilla.id_casilla);
+  const roles=['PROPIETARIO','SUPLENTE'];
+  roles.forEach(rol=>{
+    const key=rol==='PROPIETARIO'?'prop':'sup';
+    const card=document.getElementById(`rol-${key}`);
+    const lbl=document.getElementById(`bloq-${key}`);
+    if(!card||!lbl) return;
+    const ocupado=regsGlobal.some(r=>r.rol===rol);
+    if(ocupado){
+      card.classList.add('bloqueado');
+      lbl.style.display='block';
+      // Si estaba seleccionado este rol, deseleccionar
+      if(S.cRol===rol){ S.cRol=null; card.classList.remove('sel'); }
+    }else{
+      card.classList.remove('bloqueado');
+      lbl.style.display='none';
+    }
+  });
+}
+
+function selRolSiDisponible(rol, el){
+  // Verificar si está bloqueado globalmente
+  if(el.classList.contains('bloqueado')){
+    toast(`⚠ ${rol} ya está asignado en Sheets para esta casilla`,'err');
+    return;
+  }
+  selRol(rol, el);
+}
+
+// ══════════════════════════════════════════
+// CASILLA GRID — con estado global
+// ══════════════════════════════════════════
+function renderCasGrid(){
+  const sec=S.cSeccion.seccion;
+  const cas=S.catalogo.filter(c=>c.seccion===sec);
+  const g=document.getElementById('c-cas-grid');
+  document.getElementById('c-s2-sec').textContent=sec;
+  document.getElementById('c-btn-s2').disabled=true;
+  document.getElementById('c-cas-info').style.display='none';
+  S.cCasilla=null;
+  actualizarBannerEstado();
+  g.innerHTML=cas.map(c=>{
+    // Registros locales
+    const repsLocal=S.registros.filter(r=>r.tipo_reg==='casilla'&&r.seccion===sec&&r.id_casilla===c.id_casilla);
+    // Registros globales desde Sheets
+    const repsGlobal=getEstadoCasilla(sec, c.id_casilla);
+    // Determinar clase visual
+    let cls='';
+    let ico='';
+    if(repsGlobal.length>=2){
+      cls='g-full'; ico='<div class="g-ico">🔒</div>';
+    }else if(repsGlobal.length===1){
+      cls='g-partial'; ico=`<div class="g-ico" style="color:var(--amber)">½</div>`;
+    }else if(repsLocal.length>0){
+      cls='has-local';
+    }
+    const repTxt=repsGlobal.length?`<div class="crep">${repsGlobal.map(r=>r.rol==='PROPIETARIO'?'P':'S').join('+')} Sheets</div>`:
+                 repsLocal.length?`<div class="crep">${repsLocal.length} local</div>`:'';
+    return`<div class="cas-chip${cls?' '+cls:''}" onclick="selCCas('${c.id_casilla}')" data-cas="${c.id_casilla}">
+      <div class="cid">${c.id_casilla}</div>
+      <div class="ctp">${c.tipo_casilla}</div>
+      ${repTxt}${ico}
+    </div>`;
+  }).join('');
+}
+function selCCas(id){
+  const sec=S.cSeccion.seccion,item=S.catalogo.find(c=>c.seccion===sec&&c.id_casilla===id);
+  if(!item)return;
+  S.cCasilla=item;
+  document.querySelectorAll('.cas-chip').forEach(c=>c.classList.remove('sel'));
+  document.querySelector(`[data-cas="${id}"]`)?.classList.add('sel');
+  const repsLocal=S.registros.filter(r=>r.tipo_reg==='casilla'&&r.seccion===sec&&r.id_casilla===id);
+  const repsGlobal=getEstadoCasilla(sec, id);
+  document.getElementById('c-cas-info').style.display='block';
+  document.getElementById('c-cas-title').textContent=`Casilla ${id} — Sec. ${sec}`;
+  document.getElementById('c-cas-tipo').textContent=item.tipo_casilla;
+  // Mostrar estado combinado
+  let repsTexto='Sin representantes registrados';
+  if(repsGlobal.length>0){
+    repsTexto=`Sheets: ${repsGlobal.map(r=>r.rol).join(', ')}`;
+    if(repsLocal.length>0) repsTexto+=` · Local: ${repsLocal.length}`;
+  }else if(repsLocal.length>0){
+    repsTexto=`Local: ${repsLocal.length} representante(s) pendiente(s) de sincronizar`;
+  }
+  document.getElementById('c-cas-reps').textContent=repsTexto;
+  document.getElementById('c-btn-s2').disabled=false;
+  // Actualizar disponibilidad de roles
+  actualizarRolesGlobal();
+}
+
+// ══════════════════════════════════════════
+// PARTIDO / ROL
+// ══════════════════════════════════════════
+function renderCPar(){
+  const pars=parsePars();
+  document.getElementById('c-par-grid').innerHTML=pars.map(p=>`<div class="par-chip${S.cPartido===p?' sel':''}" onclick="selCPar('${p}',this)">${p}</div>`).join('');
+}
+function renderGPar(){
+  const pars=parsePars();
+  document.getElementById('g-par-grid').innerHTML=pars.map(p=>`<div class="par-chip${S.gPartido===p?' sel':''}" onclick="selGPar('${p}',this)">${p}</div>`).join('');
+}
+function selCPar(p,el){S.cPartido=p;document.querySelectorAll('#c-par-grid .par-chip').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');document.getElementById('er-par').classList.remove('on');}
+function selGPar(p,el){S.gPartido=p;document.querySelectorAll('#g-par-grid .par-chip').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');document.getElementById('er-gpar').classList.remove('on');}
+function selRol(r,el){S.cRol=r;document.querySelectorAll('.rol-card').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');document.getElementById('er-rol').classList.remove('on');}
+
+// ══════════════════════════════════════════
+// FOTOS
+// ══════════════════════════════════════════
+function abrirCamara(lado){document.getElementById(`inp-camara-${lado}`).click()}
+function abrirGaleria(lado){document.getElementById(`inp-galeria-${lado}`).click()}
+function procesarFoto(inp,lado){
+  const file=inp.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const img=new Image();
+    img.onload=()=>{
+      const MAX=900;let w=img.width,h=img.height;
+      if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}
+      const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      const b64=canvas.toDataURL('image/jpeg',0.65);
+      if(lado==='frente'){S.fotoFrente=b64;document.getElementById('foto-prev-f').src=b64;document.getElementById('foto-prev-f').classList.add('show');document.getElementById('foto-ph-f').style.display='none';document.getElementById('foto-box-f').classList.add('has-foto');}
+      else{S.fotoReverso=b64;document.getElementById('foto-prev-r').src=b64;document.getElementById('foto-prev-r').classList.add('show');document.getElementById('foto-ph-r').style.display='none';document.getElementById('foto-box-r').classList.add('has-foto');}
+      inp.value='';toast('✓ Foto procesada','ok');
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ══════════════════════════════════════════
+// VALIDACIONES
+// ══════════════════════════════════════════
+function valNom(i){i.value=i.value.toUpperCase();const ok=i.value.trim().length>=2;i.classList.toggle('ok',ok);i.classList.toggle('bad',!ok&&i.value.length>0);}
+function valAp(i,eid){i.value=i.value.toUpperCase();const ok=i.value.trim().length>=2;i.classList.toggle('ok',ok);i.classList.toggle('bad',!ok&&i.value.length>0);document.getElementById(eid).classList.toggle('on',!ok&&i.value.length>0);}
+function valINE(i,cntId,erId){const v=i.value.toUpperCase().replace(/[^A-Z0-9]/g,'');i.value=v;const ok=v.length===18;document.getElementById(cntId).textContent=`${v.length} / 18`;i.classList.toggle('ok',ok);i.classList.toggle('bad',!ok&&v.length>0);document.getElementById(erId).classList.toggle('on',!ok&&v.length>0);}
+function valTel(i,fmtId,erId){const d=i.value.replace(/\D/g,'');i.value=d;const ok=d.length===10;i.classList.toggle('ok',ok);i.classList.toggle('bad',!ok&&d.length>0);document.getElementById(erId).classList.toggle('on',!ok&&d.length>0);document.getElementById(fmtId).textContent=ok?`${d.slice(0,2)}-${d.slice(2,6)}-${d.slice(6)}`:(d.length?`${d.length}/10`:'');}
+
+// ══════════════════════════════════════════
+// REGISTROS
+// ══════════════════════════════════════════
+async function loadReg(){S.registros=await dbAll('registros');updateDash();renderReg();}
+function renderReg(){
+  let regs=[...S.registros].sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));
+  if(S.filtro==='casilla')regs=regs.filter(r=>r.tipo_reg==='casilla');
+  if(S.filtro==='general')regs=regs.filter(r=>r.tipo_reg==='general');
+  if(S.filtro==='pending')regs=regs.filter(r=>!r.synced&&!r.sync_error);
+  if(S.filtro==='synced')regs=regs.filter(r=>r.synced);
+  const list=document.getElementById('reg-list');
+  if(!regs.length){list.innerHTML=`<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><h3>Sin registros</h3><p>Captura tu primer representante</p></div>`;return;}
+  list.innerHTML=regs.map(r=>{
+    const ini=((r.nombre_p||r.nombre||'?')[0]+(r.ap_pat||'')[0]||'').toUpperCase();
+    const isGen=r.tipo_reg==='general';
+    const st=r.sync_error?`<span class="badge be">Error</span>`:r.synced?`<span class="badge bs">Sync</span>`:`<span class="badge bp">Pendiente</span>`;
+    const d=new Date(r.timestamp).toLocaleDateString('es-MX',{day:'2-digit',month:'short'});
+    const av=(!isGen&&r.foto_frente)?`<img src="${r.foto_frente}" alt="">`:ini;
+    const avClass=`reg-av${isGen?' gen':''}`;
+    const sub=isGen?`General · ${r.partido} · Secs: ${(r.secciones||[]).join(',')}`:`${r.rol} · ${r.partido}`;
+    const loc=isGen?`<span class="badge bgen" style="font-size:9px">GENERAL</span>`:`<span class="cas-lbl">S${r.seccion}·C${r.id_casilla}</span>`;
+    return`<div class="reg-item"><div class="${avClass}">${av}</div><div class="reg-info"><div class="reg-name">${r.nombre}</div><div class="reg-sub">${sub}</div><div class="reg-ine">${r.ine} · ${r.telefono}</div></div><div class="reg-right">${st}${loc}<span class="dt-lbl">${d}</span></div></div>`;
+  }).join('');
+}
+function filt(mode,el){S.filtro=mode;document.querySelectorAll('.fchip').forEach(c=>c.classList.remove('active'));el.classList.add('active');renderReg();}
+
+// ══════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════
+function updateDash(){
+  const r=S.registros;
+  const sync=r.filter(x=>x.synced).length;
+  const pend=r.filter(x=>!x.synced&&!x.sync_error).length;
+  const errs=r.filter(x=>x.sync_error).length;
+
+  // Totales: preferir Sheets si disponibles, sino locales
+  const totalCas=S.estadoGlobal.length>0 ? S.estadoGlobal.length : r.filter(x=>x.tipo_reg==='casilla').length;
+  const totalGen=S.generalesGlobal.length>0 ? S.generalesGlobal.length : r.filter(x=>x.tipo_reg==='general').length;
+  document.getElementById('dash-total').textContent=totalCas;
+  document.getElementById('dash-total-gen').textContent=totalGen;
+
+  // Etiqueta fuente de datos
+  const globalLbl=document.getElementById('dash-global-lbl');
+  if(globalLbl){
+    globalLbl.style.display='block';
+    if(S.estadoTs){
+      const mins=Math.round((new Date()-S.estadoTs)/60000);
+      globalLbl.textContent=`Todo el equipo · Sheets · hace ${mins<1?'<1':mins} min`;
+    }else{
+      globalLbl.textContent='Solo datos locales · actualiza estado para ver el equipo';
+    }
+  }
+
+  document.getElementById('st-sync').textContent=sync;
+  document.getElementById('st-pend').textContent=pend;
+  document.getElementById('st-err').textContent=errs;
+  const badge=document.getElementById('sync-badge');
+  if(pend>0){badge.textContent=pend;badge.style.display='inline-flex';document.getElementById('big-sync').classList.add('pending');document.getElementById('big-sync-lbl').textContent=`Sincronizar ${pend} pendiente${pend>1?'s':''}`;}
+  else{badge.style.display='none';document.getElementById('big-sync').classList.remove('pending');document.getElementById('big-sync-lbl').textContent='Sincronizar con Google Sheets';}
+
+  // Cobertura por sección (casillas)
+  const secMap={};
+  S.catalogo.forEach(c=>{if(!secMap[c.seccion])secMap[c.seccion]={tot:0,cov:0};secMap[c.seccion].tot++;if(S.registros.some(x=>x.tipo_reg==='casilla'&&x.seccion===c.seccion&&x.id_casilla===c.id_casilla))secMap[c.seccion].cov++;});
+  const keys=Object.keys(secMap).sort((a,b)=>Number(a)-Number(b));
+  const list=document.getElementById('cov-list');
+  if(!keys.length){list.innerHTML='<div style="padding:28px;text-align:center;font-size:13px;color:var(--muted)">Descarga el catálogo para ver cobertura</div>';}
+  else{
+    list.innerHTML=keys.map(sec=>{
+      const{tot,cov}=secMap[sec],pct=tot?Math.round(cov/tot*100):0;
+      const tieneGen=S.registros.some(r=>r.tipo_reg==='general'&&r.secciones&&r.secciones.includes(sec));
+      const genBadge=tieneGen?`<span style="background:var(--purple-bg);color:var(--purple);font-size:9px;font-weight:700;padding:2px 6px;border-radius:8px;margin-left:6px;font-family:var(--fh)">GEN</span>`:'';
+      return`<div class="cov-item">
+        <div class="cov-sec">${sec}</div>
+        <div class="cov-bar-w">
+          <div class="cov-bar-lbl"><span>${cov}/${tot} casillas${genBadge}</span><span>${pct}%</span></div>
+          <div class="cov-bar"><div class="cov-fill" style="width:${pct}%"></div></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Lista de Representantes Generales — combina locales + Sheets
+  const generalesLocal=S.registros.filter(x=>x.tipo_reg==='general').sort((a,b)=>new Date(a.timestamp)-new Date(b.timestamp));
+  // Generales de Sheets que NO están en locales (por INE)
+  const inesLocales=new Set(generalesLocal.map(g=>g.ine));
+  const soloSheets=S.generalesGlobal.filter(g=>!inesLocales.has(g.ine));
+  // Combinar: primero locales (con estado sync), luego los de Sheets no locales
+  const todosGenerales=[
+    ...generalesLocal.map(g=>({...g, fuente:'local'})),
+    ...soloSheets.map(g=>({...g, fuente:'sheets', synced:true}))
+  ];
+  const genLbl=document.getElementById('gen-dash-lbl');
+  const genList=document.getElementById('gen-dash-list');
+  if(!todosGenerales.length){
+    genLbl.style.display='none';
+    genList.innerHTML='';
+  }else{
+    genLbl.style.display='block';
+    // Secciones totales del catálogo
+    const secsTotales=new Set(S.catalogo.map(c=>c.seccion));
+    const secsConGeneral=new Set(todosGenerales.flatMap(g=>g.secciones||[]));
+    const secsPendientes=secsTotales.size - secsConGeneral.size;
+    genLbl.innerHTML=`Representantes Generales &nbsp;<span style="font-size:10px;color:var(--muted);font-weight:400">${secsConGeneral.size} secciones asignadas · ${secsPendientes} pendientes</span>`;
+    genList.innerHTML=todosGenerales.map((g,i)=>{
+      const id=String(i+1).padStart(2,'0');
+      const secs=(g.secciones||[]).map(s=>`<span class="gen-sec-tag">${s}</span>`).join('');
+      const fuenteTag=g.fuente==='sheets'
+        ?`<span style="font-size:9px;background:var(--green-bg);color:var(--green);font-weight:700;padding:1px 6px;border-radius:8px">Sheets</span>`
+        :g.sync_error
+        ?`<span style="font-size:9px;color:var(--red);font-weight:700">Error</span>`
+        :g.synced
+        ?`<span style="font-size:9px;color:var(--green);font-weight:700">✓ Sync</span>`
+        :`<span style="font-size:9px;color:var(--amber);font-weight:700">Pendiente</span>`;
+      return`<div class="gen-item">
+        <div class="gen-item-hdr">
+          <div class="gen-id">ID ${id}</div>
+          <div class="gen-nombre">${g.nombre}</div>
+          ${fuenteTag}
+        </div>
+        <div style="display:flex;gap:12px;align-items:center">
+          <div class="gen-partido">${g.partido||''}</div>
+          <div class="gen-tel">${g.telefono||'Sin teléfono'}</div>
+        </div>
+        <div class="gen-secs">${secs||'<span style="font-size:10px;color:var(--muted)">Sin secciones</span>'}</div>
+      </div>`;
+    }).join('');
+  }
+}
+
+// ══════════════════════════════════════════
+// SINCRONIZACIÓN
+// ══════════════════════════════════════════
+// ══════════════════════════════════════════
+// SINCRONIZACIÓN
+// ══════════════════════════════════════════
+// syncOne: sincroniza UN registro específico inmediatamente
+// no depende del flag syncing — para uso post-guardado
+async function syncOne(reg){
+  if(!S.cfg.scriptUrl||!navigator.onLine) return;
+  try{
+    await fetch(S.cfg.scriptUrl,{
+      method:'POST', mode:'no-cors',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(reg)
+    });
+    reg.synced=true; reg.sync_error=null;
+    await dbPut('registros',reg);
+    await loadReg();
+    toast('✓ Sincronizado con Sheets','ok');
+  }catch(e){
+    reg.sync_error=e.message||'Error de red';
+    await dbPut('registros',reg);
+    await loadReg();
+  }
+}
+
+let syncing=false;
+async function syncNow(silent=false){
+  if(syncing)return;
+  if(!S.cfg.scriptUrl){if(!silent)toast('Configura la URL del Script primero','err');return;}
+  if(!navigator.onLine){if(!silent)toast('Sin conexión','err');return;}
+  const pend=S.registros.filter(r=>!r.synced&&!r.sync_error);
+  if(!pend.length){if(!silent)toast('Sin registros pendientes','ok');return;}
+  syncing=true;
+  document.getElementById('sync-btn').classList.add('spinning');
+  if(!silent)showOv(`Sincronizando ${pend.length} registro(s)...`);
+  let ok=0,err=0;
+  for(const reg of pend){
+    try{
+      // no-cors es necesario para Apps Script — no devuelve CORS headers
+      // Si no lanza excepción asumimos que llegó correctamente
+      await fetch(S.cfg.scriptUrl,{
+        method:'POST',
+        mode:'no-cors',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(reg)
+      });
+      reg.synced=true;
+      reg.sync_error=null;
+      await dbPut('registros',reg);
+      ok++;
+    }catch(e){
+      reg.sync_error=e.message||'Error de red';
+      await dbPut('registros',reg);
+      err++;
+    }
+  }
+  await loadReg();
+  syncing=false;
+  document.getElementById('sync-btn').classList.remove('spinning');
+  hideOv();
+  if(!silent)toast(err===0?`✓ ${ok} sincronizados`:`${ok} ok · ${err} error`,err>0?'err':'ok');
+}
+async function testConn(){
+  const url=document.getElementById('cfg-url').value.trim();
+  if(!url){toast('Ingresa la URL','err');return;}
+  if(!navigator.onLine){toast('Sin conexión','err');return;}
+  toast('Probando...','');
+  try{await fetch(url+'?test=1',{mode:'no-cors'});toast('✓ URL alcanzable','ok');}
+  catch(e){toast('⚠ Error','err');}
+}
+
+// ══════════════════════════════════════════
+// CONSULTA DE CASILLA EN SHEETS
+// ══════════════════════════════════════════
+const QS = { seccion:null, casilla:null };
+
+function selQSec(sec){
+  QS.seccion = sec;
+  QS.casilla = null;
+  document.getElementById('q-sec-search').value = sec;
+  document.getElementById('q-sec-res').classList.remove('open');
+  document.getElementById('q-btn-consultar').disabled = true;
+  document.getElementById('q-result').innerHTML = '';
+  // Mostrar grid de casillas
+  const cas = S.catalogo.filter(c=>c.seccion===sec);
+  const g = document.getElementById('q-cas-grid');
+  g.innerHTML = cas.map(c=>`
+    <div class="cas-chip" onclick="selQCas('${c.id_casilla}')" data-qcas="${c.id_casilla}">
+      <div class="cid">${c.id_casilla}</div>
+      <div class="ctp">${c.tipo_casilla}</div>
+    </div>`).join('');
+  document.getElementById('q-cas-fld').style.display = 'block';
+}
+
+function selQCas(id){
+  QS.casilla = id;
+  document.querySelectorAll('[data-qcas]').forEach(c=>c.classList.remove('sel'));
+  document.querySelector(`[data-qcas="${id}"]`)?.classList.add('sel');
+  document.getElementById('q-btn-consultar').disabled = false;
+  document.getElementById('q-result').innerHTML = '';
+}
+
+async function consultarCasilla(){
+  if(!QS.seccion || !QS.casilla){ toast('Selecciona sección y casilla','err'); return; }
+  if(!S.cfg.scriptUrl){ toast('Configura la URL del Script primero','err'); return; }
+  if(!navigator.onLine){ toast('Sin conexión — consulta no disponible offline','err'); return; }
+
+  const res = document.getElementById('q-result');
+  res.innerHTML = `<div class="consultando"><div class="mini-spin"></div>Consultando Sheets...</div>`;
+
+  try{
+    const url = `${S.cfg.scriptUrl}?action=consulta&seccion=${encodeURIComponent(QS.seccion)}&casilla=${encodeURIComponent(QS.casilla)}`;
+    const resp = await fetch(url);
+    const data = await resp.json();
+
+    if(data.status !== 'OK'){ res.innerHTML=`<div class="consultando">⚠ Error: ${data.message||'Sin respuesta'}</div>`; return; }
+
+    const reps = data.representantes || [];
+    const clave = `${QS.seccion}-${QS.casilla}`;
+
+    if(reps.length === 0){
+      res.innerHTML = `
+        <div class="result-card">
+          <div class="result-hdr libre">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            <h3>Casilla ${QS.casilla} — Sección ${QS.seccion}</h3>
+          </div>
+          <div style="text-align:center;padding:24px">
+            <div class="libre-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+            <div style="font-family:var(--fh);font-size:17px;font-weight:700;color:var(--green)">Sin representantes asignados</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:4px">Esta casilla está disponible en Sheets</div>
+          </div>
+        </div>`;
+      return;
+    }
+
+    // Tiene representantes
+    const tieneProp = reps.some(r=>r.rol==='PROPIETARIO');
+    const tieneSup  = reps.some(r=>r.rol==='SUPLENTE');
+    const completa  = tieneProp && tieneSup;
+    const estadoCls = completa ? 'ocupado' : 'parcial';
+    const estadoTxt = completa ? `Casilla ${QS.casilla} — Completa` : `Casilla ${QS.casilla} — Cobertura parcial`;
+    const iconoHdr  = completa
+      ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`
+      : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
+
+    const filas = reps.map(r=>{
+      const esProp = r.rol==='PROPIETARIO';
+      const ini = ((r.nombre||'?')[0]).toUpperCase();
+      const tel = r.telefono ? `<div class="rep-tel">${r.telefono}</div>` : '';
+      return `
+        <div class="rep-row">
+          <div class="rep-av${esProp?'':' sup'}">${ini}</div>
+          <div class="rep-info">
+            <div class="rep-nombre">${r.nombre}</div>
+            <div class="rep-rol">${r.rol}</div>
+            <div class="rep-partido">${r.partido}</div>
+            ${tel}
+          </div>
+        </div>`;
+    }).join('');
+
+    // Mostrar roles faltantes
+    let faltantes = '';
+    if(!tieneProp) faltantes += `<div class="rep-row"><div class="rep-av" style="background:var(--border);color:var(--muted)">?</div><div class="rep-info"><div class="rep-nombre" style="color:var(--muted)">Sin propietario asignado</div><div class="rep-rol" style="color:var(--red);font-weight:700">FALTA CUBRIR</div></div></div>`;
+    if(!tieneSup)  faltantes += `<div class="rep-row"><div class="rep-av sup" style="background:var(--border);color:var(--muted)">?</div><div class="rep-info"><div class="rep-nombre" style="color:var(--muted)">Sin suplente asignado</div><div class="rep-rol" style="color:var(--red);font-weight:700">FALTA CUBRIR</div></div></div>`;
+
+    res.innerHTML = `
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px;text-align:right">
+        Sección ${QS.seccion} · Casilla ${QS.casilla} · ${new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}
+      </div>
+      <div class="result-card">
+        <div class="result-hdr ${estadoCls}">${iconoHdr}<h3>${estadoTxt}</h3></div>
+        ${filas}${faltantes}
+      </div>`;
+
+  } catch(e){
+    res.innerHTML = `<div class="consultando">⚠ Error al conectar con Sheets</div>`;
+  }
+}
+
+// ══════════════════════════════════════════
+// NAVEGACIÓN
+// ══════════════════════════════════════════
+function showScreen(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.toggle('active',t.dataset.sc===name));
+  document.getElementById(`screen-${name}`).classList.add('active');
+  if(name==='captura'){volverTipo();}
+  if(name==='dashboard')updateDash();
+  if(name==='registros')renderReg();
+  if(name==='config')updateCatStatus();
+  if(name==='consulta'){
+    // Reset consulta al entrar
+    document.getElementById('q-sec-search').value='';
+    document.getElementById('q-sec-res').classList.remove('open');
+    document.getElementById('q-cas-fld').style.display='none';
+    document.getElementById('q-btn-consultar').disabled=true;
+    document.getElementById('q-result').innerHTML='';
+    QS.seccion=null; QS.casilla=null;
+  }
+}
+
+// ══════════════════════════════════════════
+// UTILIDADES
+// ══════════════════════════════════════════
+function toast(msg,type='',dur=2800){const t=document.getElementById('toast');t.textContent=msg;t.className=`toast ${type} show`;setTimeout(()=>t.classList.remove('show'),dur);}
+function showOv(msg){document.getElementById('ov-msg').textContent=msg;document.getElementById('overlay').classList.add('show');}
+function hideOv(){document.getElementById('overlay').classList.remove('show');}
+function exportJSON(){const b=new Blob([JSON.stringify(S.registros,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`representantes_${new Date().toISOString().slice(0,10)}.json`;a.click();}
+async function clearAll(){if(!confirm('¿Borrar TODOS los registros locales?'))return;await dbClear('registros');await loadReg();toast('Registros eliminados','ok');}
+
+async function recuperarDeSheets(){
+  if(!S.cfg.scriptUrl){toast('Configura la URL del Script primero','err');return;}
+  if(!navigator.onLine){toast('Sin conexión a internet','err');return;}
+  if(!confirm('¿Descargar todos los registros desde Google Sheets?\n\nEsto reemplaza los datos locales con los del servidor.')) return;
+  showOv('Recuperando registros de Sheets...');
+  try{
+    const resp=await fetch(S.cfg.scriptUrl+'?action=recuperar');
+    const data=await resp.json();
+    if(data.status!=='OK'){hideOv();toast('Error: '+data.message,'err');return;}
+    await dbClear('registros');
+    let n=0;
+    for(const reg of (data.registros||[])){
+      await dbPut('registros',{...reg, synced:true, sync_error:null});
+      n++;
+    }
+    for(const gen of (data.generales||[])){
+      await dbPut('registros',{...gen, tipo_reg:'general', synced:true, sync_error:null});
+      n++;
+    }
+    await loadReg();
+    hideOv();
+    toast(`✓ ${n} registros recuperados de Sheets`,'ok');
+  }catch(e){
+    hideOv();
+    toast('Error al recuperar: '+e.message,'err');
+  }
+}
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+async function init(){
+  await openDB();await loadCfg();await loadCatalogo();await loadReg();
+  if(S.cfg.scriptUrl&&S.catalogo.length===0&&navigator.onLine)await descargarCatalogo();
+  document.addEventListener('click',e=>{
+    if(!e.target.closest('#c-sec-search')&&!e.target.closest('#c-sec-res'))document.getElementById('c-sec-res').classList.remove('open');
+    if(!e.target.closest('#g-sec-search')&&!e.target.closest('#g-sec-res'))document.getElementById('g-sec-res').classList.remove('open');
+    if(!e.target.closest('#q-sec-search')&&!e.target.closest('#q-sec-res'))document.getElementById('q-sec-res').classList.remove('open');
+  });
+  window.addEventListener('online',()=>toast('Conexión restaurada','ok'));
+  window.addEventListener('offline',()=>toast('Sin conexión — modo offline',''));
+}
+init();
+</script>
+</body>
+</html>
