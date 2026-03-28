@@ -1931,8 +1931,8 @@ async function clearAll(){if(!confirm('¿Borrar TODOS los registros locales?'))r
 async function recuperarDeSheets(){
   if(!S.cfg.scriptUrl){toast('Configura la URL del Script primero','err');return;}
   if(!navigator.onLine){toast('Sin conexión a internet','err');return;}
-  if(!confirm('¿Descargar todos los registros desde Google Sheets?\n\nEsto reemplaza los datos locales con los del servidor.')) return;
-  showOv('Recuperando registros de Sheets...');
+  if(!confirm('¿Descargar todos los registros desde el servidor central?\n\nEsto reemplaza los datos locales con los del servidor.')) return;
+  showOv('Recuperando registros del servidor...');
   try{
     const resp=await fetch(S.cfg.scriptUrl+'?action=recuperar');
     const data=await resp.json();
@@ -1949,7 +1949,7 @@ async function recuperarDeSheets(){
     }
     await loadReg();
     hideOv();
-    toast(`✓ ${n} registros recuperados de Sheets`,'ok');
+    toast(`✓ ${n} registros recuperados del servidor`,'ok');
   }catch(e){
     hideOv();
     toast('Error al recuperar: '+e.message,'err');
