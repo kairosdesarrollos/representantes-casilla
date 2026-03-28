@@ -912,7 +912,7 @@ const S={
   catalogo:[], registros:[], filtro:'all',
   // estado global desde Sheets
   estadoGlobal:[], generalesGlobal:[], estadoTs:null,
-  cfg:{municipio:'',capturista:'',scriptUrl:'',partidos:'MORENA'}
+  cfg:{municipio:'',capturista:'',scriptUrl:'',partidos:'PAN'}
 };
 
 // ══════════════════════════════════════════
@@ -946,7 +946,7 @@ async function loadCfg(){
   document.getElementById('cfg-muni').value=S.cfg.municipio||'';
   document.getElementById('cfg-cap').value=S.cfg.capturista||'';
   document.getElementById('cfg-url').value=S.cfg.scriptUrl||'';
-  document.getElementById('cfg-par').value=S.cfg.partidos||'MORENA';
+  document.getElementById('cfg-par').value=S.cfg.partidos||'PAN';
   if(document.getElementById('cfg-pin')) document.getElementById('cfg-pin').value=S.cfg.pin||'';
   if(document.getElementById('cfg-inact')) document.getElementById('cfg-inact').value=S.cfg.inact||'30';
   // Mostrar deviceId
