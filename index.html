@@ -1442,7 +1442,7 @@ function updateDash(){
   document.getElementById('st-err').textContent=errs;
   const badge=document.getElementById('sync-badge');
   if(pend>0){badge.textContent=pend;badge.style.display='inline-flex';document.getElementById('big-sync').classList.add('pending');document.getElementById('big-sync-lbl').textContent=`Sincronizar ${pend} pendiente${pend>1?'s':''}`;}
-  else{badge.style.display='none';document.getElementById('big-sync').classList.remove('pending');document.getElementById('big-sync-lbl').textContent='Sincronizar con Google DB';}
+  else{badge.style.display='none';document.getElementById('big-sync').classList.remove('pending');document.getElementById('big-sync-lbl').textContent='Sincronizar con DB';}
 
   // Cobertura por sección (casillas)
   const secMap={};
