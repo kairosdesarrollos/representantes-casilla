@@ -22,7 +22,8 @@
 }
 html,body{height:100%;overflow:hidden;background:var(--navy)}
 body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
-#app{display:flex;flex-direction:column;height:100%;max-width:500px;margin:0 auto;background:var(--bg);overflow:hidden}
+#app-screen{display:flex;flex-direction:column;height:100%;overflow:hidden}
+#app{display:flex;flex-direction:column;flex:1;max-width:500px;margin:0 auto;background:var(--bg);overflow:hidden;width:100%}
 
 /* HEADER */
 .hdr{background:var(--navy);padding:env(safe-area-inset-top,0) 0 0;flex-shrink:0}
@@ -300,7 +301,20 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
 .ov-card{background:var(--surface);border-radius:var(--r);padding:24px 32px;text-align:center}
 .spinner{width:38px;height:38px;border:3px solid var(--border);border-top-color:var(--navy);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px}
 
-/* CONSULTA */
+/* LOGIN CON PIN — Fix 10,11 */
+#login-screen{position:fixed;inset:0;background:var(--navy);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px}
+#login-screen.hidden{display:none}
+.pin-logo{width:56px;height:56px;background:var(--red);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px}
+.pin-logo svg{width:28px;height:28px;color:#fff}
+.pin-titulo{font-family:var(--fh);font-size:26px;font-weight:700;color:#fff;text-align:center;margin-bottom:4px}
+.pin-sub{font-size:13px;color:rgba(255,255,255,.45);text-align:center;margin-bottom:28px}
+.pin-inp{width:100%;max-width:280px;background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.2);border-radius:var(--rs);padding:14px;font-size:24px;color:#fff;text-align:center;letter-spacing:8px;font-family:var(--fm);outline:none;transition:border .15s}
+.pin-inp:focus{border-color:rgba(255,255,255,.5)}
+.pin-btn{width:100%;max-width:280px;background:var(--red);color:#fff;border:none;border-radius:var(--rs);padding:14px;font-family:var(--fh);font-size:18px;font-weight:600;letter-spacing:.5px;cursor:pointer;margin-top:14px;transition:background .15s}
+.pin-btn:active{background:#a50d22}
+.pin-error{color:var(--red-bg);font-size:13px;font-weight:600;margin-top:10px;text-align:center;display:none}
+.pin-muni{font-size:12px;color:rgba(255,255,255,.3);text-align:center;margin-top:20px}
+#app-screen{display:flex;flex-direction:column;height:100%;overflow:hidden}
 .consulta-wrap{padding:16px 16px 80px}
 .consulta-hdr{background:var(--navy);border-radius:var(--r);padding:16px;margin-bottom:16px;color:#fff}
 .consulta-hdr h2{font-family:var(--fh);font-size:20px;font-weight:700;margin-bottom:3px}
@@ -335,6 +349,19 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
 </style>
 </head>
 <body>
+<div id="login-screen">
+  <div class="pin-logo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+  </div>
+  <div class="pin-titulo">Acceso al sistema</div>
+  <div class="pin-sub" id="pin-muni-lbl">Representantes de Casilla</div>
+  <input type="password" id="login-pin" class="pin-inp" placeholder="••••" maxlength="8" inputmode="numeric" autocomplete="off" onkeydown="if(event.key==='Enter')verificarPin()">
+  <button class="pin-btn" onclick="verificarPin()">Ingresar</button>
+  <div class="pin-error" id="login-error">PIN incorrecto. Intenta de nuevo.</div>
+  <div class="pin-muni" id="login-device-id"></div>
+</div>
+
+<div id="app-screen">
 <div id="app">
 
 <!-- HEADER -->
@@ -400,7 +427,7 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
   <div class="sync-area">
     <button class="big-sync" id="big-sync" onclick="syncNow()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-      <span id="big-sync-lbl">Sincronizar con DB</span>
+      <span id="big-sync-lbl">Sincronizar con servidor central</span>
     </button>
   </div>
   <div style="padding:8px 16px">
@@ -490,7 +517,7 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
       <!-- BANNER ESTADO GLOBAL -->
       <div class="estado-bar" id="estado-bar">
         <div class="dot dot-no" id="estado-dot"></div>
-        <span id="estado-txt">Sin estado de DB</span>
+        <span id="estado-txt">Sin estado de Sheets</span>
         <button onclick="descargarEstado()" id="estado-btn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
           Actualizar estado
@@ -502,8 +529,8 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
         <div class="leyenda">
           <div class="ley-item"><div class="ley-box lb-libre"></div>Libre</div>
           <div class="ley-item"><div class="ley-box lb-local"></div>Capturado local</div>
-          <div class="ley-item"><div class="ley-box lb-parcial"></div>Parcial (DB)</div>
-          <div class="ley-item"><div class="ley-box lb-llena"></div>Completa (DB)</div>
+          <div class="ley-item"><div class="ley-box lb-parcial"></div>Parcial (Sheets)</div>
+          <div class="ley-item"><div class="ley-box lb-llena"></div>Completa (Sheets)</div>
         </div>
         <div class="cas-grid" id="c-cas-grid"></div>
       </div>
@@ -534,13 +561,13 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
             <div class="rol-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
             <h4>Propietario</h4>
             <p>Representante titular</p>
-            <div class="rol-bloq-lbl" id="bloq-prop" style="display:none">Ya asignado en DB</div>
+            <div class="rol-bloq-lbl" id="bloq-prop" style="display:none">Ya asignado en Sheets</div>
           </div>
           <div class="rol-card" id="rol-sup" onclick="selRolSiDisponible('SUPLENTE',this)">
             <div class="rol-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
             <h4>Suplente</h4>
             <p>Representante alterno</p>
-            <div class="rol-bloq-lbl" id="bloq-sup" style="display:none">Ya asignado en DB</div>
+            <div class="rol-bloq-lbl" id="bloq-sup" style="display:none">Ya asignado en Sheets</div>
           </div>
         </div>
         <div class="errmsg" id="er-rol">Selecciona un rol</div>
@@ -768,15 +795,22 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
   <div class="cfg-s">
     <div class="cfg-card">
       <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>Municipio</h3>
-      <div class="fld"><label>Nombre del municipio</label><input type="text" id="cfg-muni" placeholder="Ej. San Andrés Cholula" oninput="saveCfg()"></div>
-      <div class="fld"><label>Capturista</label><input type="text" id="cfg-cap" placeholder="Nombre del capturista" oninput="saveCfg()"></div>
+      <div class="fld"><label>Municipio</label><input type="text" id="cfg-muni" placeholder="Ej. San Andrés Cholula" oninput="saveCfg()"></div>
+      <div class="fld">
+        <label>Correo del capturista</label>
+        <input type="email" id="cfg-cap" placeholder="capturista@correo.com" oninput="valEmail(this);saveCfg()" autocomplete="email" inputmode="email">
+        <div class="hint">Identifica quién realizó cada captura</div>
+        <div class="errmsg" id="er-cap">Ingresa un correo electrónico válido</div>
+      </div>
     </div>
     <div class="cfg-card">
       <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Sincronización</h3>
-      <div class="fld"><label>URL del Apps Script</label><input type="url" id="cfg-url" placeholder="https://script.google.com/macros/s/…/exec" oninput="saveCfg()"></div>
+      <div class="fld"><label>URL del servidor central</label><input type="url" id="cfg-url" placeholder="https://script.google.com/macros/s/…/exec" oninput="saveCfg()">
+        <div class="hint">Proporcionada por el administrador del sistema</div>
+      </div>
       <div class="btn-row">
         <button class="btn btn-secondary" onclick="testConn()" style="margin-top:6px">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Probar
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Probar conexión
         </button>
         <button class="btn btn-primary" onclick="descargarCatalogo()" style="margin-top:6px">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Actualizar catálogo
@@ -788,7 +822,26 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
       <div id="cat-status-wrap"></div>
     </div>
     <div class="cfg-card">
-      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>Partidos</h3>
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Acceso y seguridad</h3>
+      <div class="fld">
+        <label>PIN de acceso <span style="font-weight:400;color:var(--light)">(4-8 dígitos)</span></label>
+        <input type="password" id="cfg-pin" placeholder="••••" maxlength="8" inputmode="numeric" oninput="saveCfg()" style="letter-spacing:4px;font-family:var(--fm)">
+        <div class="hint">Los usuarios necesitan este PIN para abrir la app</div>
+      </div>
+      <div class="fld">
+        <label>Inactividad — cerrar sesión después de</label>
+        <select id="cfg-inact" onchange="saveCfg()">
+          <option value="15">15 minutos</option>
+          <option value="30" selected>30 minutos</option>
+          <option value="60">1 hora</option>
+          <option value="120">2 horas</option>
+          <option value="0">Nunca</option>
+        </select>
+      </div>
+      <div style="font-size:11px;color:var(--muted);padding:4px 0">
+        ID del dispositivo: <span id="cfg-device-id" style="font-family:var(--fm);font-size:10px;color:var(--light)">—</span>
+      </div>
+    </div>
       <div class="fld"><label>Separados por coma</label><textarea id="cfg-par" style="min-height:55px" oninput="saveCfg()"></textarea></div>
     </div>
     <div class="cfg-card" style="border-left:3px solid var(--red)">
@@ -800,10 +853,10 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
       <div style="margin-top:8px">
         <button class="btn btn-secondary" onclick="recuperarDeSheets()" style="border-color:var(--green);color:var(--green)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-          Recuperar registros de DB
+          Recuperar registros del servidor
         </button>
       </div>
-      <div style="font-size:11px;color:var(--muted);margin-top:6px">Usa esto si borraste los datos locales por error — descarga todo desde DB</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px">Restaura los datos si se borraron por error — descarga desde el servidor central</div>
     </div>
     <div style="height:20px"></div>
   </div>
@@ -814,7 +867,7 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
   <div class="consulta-wrap">
     <div class="consulta-hdr">
       <h2>Consulta de Casilla</h2>
-      <p>Busca quién está asignado a cualquier casilla en DB</p>
+      <p>Busca quién está asignado a cualquier casilla en Sheets</p>
     </div>
 
     <div class="fld">
@@ -833,7 +886,7 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
 
     <button class="btn btn-primary" id="q-btn-consultar" onclick="consultarCasilla()" disabled style="margin-top:4px">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-      Consultar en DB
+      Consultar en Sheets
     </button>
 
     <div class="consulta-result" id="q-result"></div>
@@ -841,7 +894,9 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
 </div>
 
 </div><!-- cierre #app -->
+<div class="toast" id="toast"></div>
 <div class="overlay" id="overlay"><div class="ov-card"><div class="spinner"></div><p id="ov-msg" style="font-size:13px;color:var(--muted)">Procesando...</p></div></div>
+</div><!-- cierre app-screen -->
 
 <script>
 // ══════════════════════════════════════════
@@ -855,9 +910,9 @@ const S={
   gStep:1, gSecciones:[], gPartido:null,
   // común
   catalogo:[], registros:[], filtro:'all',
-  // estado global desde DB
+  // estado global desde Sheets
   estadoGlobal:[], generalesGlobal:[], estadoTs:null,
-  cfg:{municipio:'',capturista:'',scriptUrl:'',partidos:'PAN'}
+  cfg:{municipio:'',capturista:'',scriptUrl:'',partidos:'MORENA'}
 };
 
 // ══════════════════════════════════════════
@@ -891,7 +946,16 @@ async function loadCfg(){
   document.getElementById('cfg-muni').value=S.cfg.municipio||'';
   document.getElementById('cfg-cap').value=S.cfg.capturista||'';
   document.getElementById('cfg-url').value=S.cfg.scriptUrl||'';
-  document.getElementById('cfg-par').value=S.cfg.partidos||'PAN';
+  document.getElementById('cfg-par').value=S.cfg.partidos||'MORENA';
+  if(document.getElementById('cfg-pin')) document.getElementById('cfg-pin').value=S.cfg.pin||'';
+  if(document.getElementById('cfg-inact')) document.getElementById('cfg-inact').value=S.cfg.inact||'30';
+  // Mostrar deviceId
+  const did=await getDeviceId();
+  S.cfg.deviceId=did;
+  const elDid=document.getElementById('cfg-device-id');
+  if(elDid) elDid.textContent=did;
+  const elLdid=document.getElementById('login-device-id');
+  if(elLdid) elLdid.textContent=`Dispositivo: ${did}`;
   refreshHdr();
 }
 async function saveCfg(){
@@ -899,8 +963,15 @@ async function saveCfg(){
   S.cfg.capturista=document.getElementById('cfg-cap').value.trim();
   S.cfg.scriptUrl=document.getElementById('cfg-url').value.trim();
   S.cfg.partidos=document.getElementById('cfg-par').value.trim();
+  const pinEl=document.getElementById('cfg-pin');
+  if(pinEl&&pinEl.value.trim()) S.cfg.pin=pinEl.value.trim();
+  const inactEl=document.getElementById('cfg-inact');
+  if(inactEl) S.cfg.inact=inactEl.value;
   for(const[k,v]of Object.entries(S.cfg)) await dbPut('config',{k,v});
   refreshHdr();
+  // Actualizar label del municipio en pantalla de login
+  const pm=document.getElementById('pin-muni-lbl');
+  if(pm&&S.cfg.municipio) pm.textContent=S.cfg.municipio;
 }
 function refreshHdr(){
   const m=S.cfg.municipio||'Sin configurar';
@@ -1000,21 +1071,30 @@ function renderCasConfirm(){
   }else cc.style.display='none';
 }
 async function guardarCasilla(){
-  const nom=document.getElementById('c-nom').value.trim().toUpperCase();
-  const pat=document.getElementById('c-pat').value.trim().toUpperCase();
-  const mat=document.getElementById('c-mat').value.trim().toUpperCase();
+  const nom=quitarAcentos(document.getElementById('c-nom').value.trim());
+  const pat=quitarAcentos(document.getElementById('c-pat').value.trim());
+  const mat=quitarAcentos(document.getElementById('c-mat').value.trim());
   const ine=document.getElementById('c-ine').value.trim().toUpperCase();
   const tel=document.getElementById('c-tel').value.replace(/\D/g,'');
-  const not=document.getElementById('c-not').value.trim();
+  const not=quitarAcentos(document.getElementById('c-not').value.trim());
   const telF=`${tel.slice(0,2)}-${tel.slice(2,6)}-${tel.slice(6)}`;
-  if(S.registros.some(r=>r.tipo_reg==='casilla'&&String(r.seccion)===String(S.cSeccion.seccion)&&r.id_casilla===S.cCasilla.id_casilla&&r.rol===S.cRol&&r.partido===S.cPartido)){toast('⚠ Ya existe ese rol/partido en esta casilla','err');return;}
-  if(S.registros.some(r=>r.ine===ine)){toast('⚠ Clave INE ya registrada','err');return;}
-  const reg={tipo_reg:'casilla',seccion:S.cSeccion.seccion,id_casilla:S.cCasilla.id_casilla,tipo_casilla:S.cCasilla.tipo_casilla,nombre:`${nom} ${pat} ${mat}`.trim(),nombre_p:nom,ap_pat:pat,ap_mat:mat,ine,telefono:telF,rol:S.cRol,partido:S.cPartido,notas:not,foto_frente:S.fotoFrente||null,foto_reverso:S.fotoReverso||null,capturado_por:S.cfg.capturista||'Anónimo',timestamp:new Date().toISOString(),synced:false,sync_error:null};
-  await dbPut('registros',reg);
+  // Fix 12 — Validar duplicado INE: local + Sheets
+  const ineExisteLocal=S.registros.some(r=>r.ine===ine);
+  const ineExisteSheets=S.estadoGlobal.some(r=>r.ine===ine)||S.generalesGlobal.some(r=>r.ine===ine);
+  if(ineExisteLocal||ineExisteSheets){
+    toast(`⚠ Clave INE ya registrada${ineExisteSheets?' en el servidor':' en este dispositivo'}`, 'err');
+    return;
+  }
+  if(S.registros.some(r=>r.tipo_reg==='casilla'&&String(r.seccion)===String(S.cSeccion.seccion)&&r.id_casilla===S.cCasilla.id_casilla&&r.rol===S.cRol&&r.partido===S.cPartido)){
+    toast('⚠ Ya existe ese rol/partido en esta casilla','err');return;
+  }
+  const reg={tipo_reg:'casilla',seccion:S.cSeccion.seccion,id_casilla:S.cCasilla.id_casilla,tipo_casilla:S.cCasilla.tipo_casilla,nombre:`${nom} ${pat} ${mat}`.trim(),nombre_p:nom,ap_pat:pat,ap_mat:mat,ine,telefono:telF,rol:S.cRol,partido:S.cPartido,notas:not,foto_frente:S.fotoFrente||null,foto_reverso:S.fotoReverso||null,capturado_por:S.cfg.capturista||'Anonimo',device_id:S.cfg.deviceId||'',timestamp:new Date().toISOString(),synced:false,sync_error:null};
+  const id=await dbPut('registros',reg);
+  reg.id=id;
   await loadReg();
   toast('✓ Registro guardado','ok');
   resetCasilla();volverTipo();showScreen('registros');
-  syncOne(reg);
+  syncOne({...reg, id});
 }
 function resetCasilla(){
   S.cStep=1;S.cSeccion=null;S.cCasilla=null;S.cRol=null;S.cPartido=null;S.fotoFrente=null;S.fotoReverso=null;
@@ -1086,23 +1166,25 @@ function renderGenConfirm(){
   document.getElementById('gv-not-row').style.display=n?'flex':'none';
 }
 async function guardarGeneral(){
-  const nom=document.getElementById('g-nom').value.trim().toUpperCase();
-  const pat=document.getElementById('g-pat').value.trim().toUpperCase();
-  const mat=document.getElementById('g-mat').value.trim().toUpperCase();
+  const nom=quitarAcentos(document.getElementById('g-nom').value.trim());
+  const pat=quitarAcentos(document.getElementById('g-pat').value.trim());
+  const mat=quitarAcentos(document.getElementById('g-mat').value.trim());
   const ine=document.getElementById('g-ine').value.trim().toUpperCase();
   const tel=document.getElementById('g-tel').value.replace(/\D/g,'');
-  const not=document.getElementById('g-not').value.trim();
+  const not=quitarAcentos(document.getElementById('g-not').value.trim());
   const telF=`${tel.slice(0,2)}-${tel.slice(2,6)}-${tel.slice(6)}`;
 
-  // Validar INE duplicada
-  if(S.registros.some(r=>r.ine===ine)){toast('⚠ Clave INE ya registrada','err');return;}
+  // Fix 12 — Validar INE duplicada local + Sheets
+  const ineExL=S.registros.some(r=>r.ine===ine);
+  const ineExS=S.estadoGlobal.some(r=>r.ine===ine)||S.generalesGlobal.some(r=>r.ine===ine);
+  if(ineExL||ineExS){toast(`⚠ Clave INE ya registrada${ineExS?' en el servidor':' en este dispositivo'}`,'err');return;}
 
   // Validar sección única — una sección solo puede tener UN general
   const secsOcupadas=[];
   for(const sec of S.gSecciones){
     // Revisar en locales
     const enLocal=S.registros.some(r=>r.tipo_reg==='general'&&r.secciones&&r.secciones.includes(sec));
-    // Revisar en DB (generalesGlobal)
+    // Revisar en Sheets (generalesGlobal)
     const enSheets=S.generalesGlobal.some(g=>g.secciones&&g.secciones.includes(sec));
     if(enLocal||enSheets) secsOcupadas.push(sec);
   }
@@ -1115,14 +1197,16 @@ async function guardarGeneral(){
     tipo_reg:'general', secciones:S.gSecciones,
     nombre:`${nom} ${pat} ${mat}`.trim(), nombre_p:nom, ap_pat:pat, ap_mat:mat,
     ine, telefono:telF, partido:S.gPartido, notas:not,
-    capturado_por:S.cfg.capturista||'Anónimo',
+    capturado_por:S.cfg.capturista||'Anonimo',
+    device_id:S.cfg.deviceId||'',
     timestamp:new Date().toISOString(), synced:false, sync_error:null
   };
-  await dbPut('registros',reg);
+  const id=await dbPut('registros',reg);
+  reg.id=id;
   await loadReg();
   toast('✓ General guardado','ok');
   resetGeneral();volverTipo();showScreen('registros');
-  syncOne(reg);
+  syncOne({...reg, id});
 }
 function resetGeneral(){
   S.gStep=1;S.gSecciones=[];S.gPartido=null;
@@ -1192,7 +1276,7 @@ function selCSec(sec){
 }
 
 // ══════════════════════════════════════════
-// ESTADO GLOBAL DESDE DB
+// ESTADO GLOBAL DESDE SHEETS
 // ══════════════════════════════════════════
 async function descargarEstado(){
   if(!S.cfg.scriptUrl){toast('Configura la URL del Script primero','err');return;}
@@ -1227,7 +1311,7 @@ function actualizarBannerEstado(){
   if(!dot||!txt) return;
   if(!S.estadoTs){
     dot.className='dot dot-no';
-    txt.textContent='Sin estado de DB — toca Actualizar';
+    txt.textContent='Sin estado de Sheets — toca Actualizar';
   }else{
     const mins=Math.round((new Date()-S.estadoTs)/60000);
     dot.className='dot dot-ok';
@@ -1269,7 +1353,7 @@ function actualizarRolesGlobal(){
 function selRolSiDisponible(rol, el){
   // Verificar si está bloqueado globalmente
   if(el.classList.contains('bloqueado')){
-    toast(`⚠ ${rol} ya está asignado en DB para esta casilla`,'err');
+    toast(`⚠ ${rol} ya está asignado en Sheets para esta casilla`,'err');
     return;
   }
   selRol(rol, el);
@@ -1290,7 +1374,7 @@ function renderCasGrid(){
   g.innerHTML=cas.map(c=>{
     // Registros locales
     const repsLocal=S.registros.filter(r=>r.tipo_reg==='casilla'&&r.seccion===sec&&r.id_casilla===c.id_casilla);
-    // Registros globales desde DB
+    // Registros globales desde Sheets
     const repsGlobal=getEstadoCasilla(sec, c.id_casilla);
     // Determinar clase visual
     let cls='';
@@ -1377,12 +1461,109 @@ function procesarFoto(inp,lado){
 }
 
 // ══════════════════════════════════════════
-// VALIDACIONES
+// FIX 6 — Validación de email
 // ══════════════════════════════════════════
-function valNom(i){i.value=i.value.toUpperCase();const ok=i.value.trim().length>=2;i.classList.toggle('ok',ok);i.classList.toggle('bad',!ok&&i.value.length>0);}
-function valAp(i,eid){i.value=i.value.toUpperCase();const ok=i.value.trim().length>=2;i.classList.toggle('ok',ok);i.classList.toggle('bad',!ok&&i.value.length>0);document.getElementById(eid).classList.toggle('on',!ok&&i.value.length>0);}
-function valINE(i,cntId,erId){const v=i.value.toUpperCase().replace(/[^A-Z0-9]/g,'');i.value=v;const ok=v.length===18;document.getElementById(cntId).textContent=`${v.length} / 18`;i.classList.toggle('ok',ok);i.classList.toggle('bad',!ok&&v.length>0);document.getElementById(erId).classList.toggle('on',!ok&&v.length>0);}
-function valTel(i,fmtId,erId){const d=i.value.replace(/\D/g,'');i.value=d;const ok=d.length===10;i.classList.toggle('ok',ok);i.classList.toggle('bad',!ok&&d.length>0);document.getElementById(erId).classList.toggle('on',!ok&&d.length>0);document.getElementById(fmtId).textContent=ok?`${d.slice(0,2)}-${d.slice(2,6)}-${d.slice(6)}`:(d.length?`${d.length}/10`:'');}
+function valEmail(i){
+  const ok=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(i.value.trim());
+  i.classList.toggle('ok',ok&&i.value.length>0);
+  i.classList.toggle('bad',!ok&&i.value.length>0);
+  const er=document.getElementById('er-cap');
+  if(er) er.classList.toggle('on',!ok&&i.value.length>0);
+}
+
+// ══════════════════════════════════════════
+// FIX 8 — ID de dispositivo único (persistente)
+// ══════════════════════════════════════════
+async function getDeviceId(){
+  let did=(await dbAll('config')).find(i=>i.k==='deviceId')?.v;
+  if(!did){
+    did='DEV-'+Date.now().toString(36).toUpperCase()+'-'+Math.random().toString(36).slice(2,6).toUpperCase();
+    await dbPut('config',{k:'deviceId',v:did});
+  }
+  return did;
+}
+
+// ══════════════════════════════════════════
+// FIX 10 — Control de acceso con PIN
+// ══════════════════════════════════════════
+let sesionActiva=false;
+const INACTIVIDAD_MS=30*60*1000; // 30 minutos
+let timerInactividad=null;
+
+function iniciarTimerInactividad(){
+  clearTimeout(timerInactividad);
+  timerInactividad=setTimeout(()=>{
+    if(sesionActiva){
+      sesionActiva=false;
+      toast('Sesión cerrada por inactividad','');
+      mostrarLogin();
+    }
+  },INACTIVIDAD_MS);
+}
+
+function resetInactividad(){
+  if(sesionActiva) iniciarTimerInactividad();
+}
+
+function mostrarLogin(){
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('app-screen').style.display='none';
+}
+
+function ocultarLogin(){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app-screen').style.display='flex';
+  sesionActiva=true;
+  iniciarTimerInactividad();
+}
+
+async function verificarPin(){
+  const pinIngresado=document.getElementById('login-pin').value.trim();
+  const pinGuardado=S.cfg.pin||'1234';
+  if(pinIngresado===pinGuardado){
+    document.getElementById('login-error').style.display='none';
+    ocultarLogin();
+  }else{
+    document.getElementById('login-error').style.display='block';
+    document.getElementById('login-pin').value='';
+    document.getElementById('login-pin').focus();
+  }
+}
+
+// ══════════════════════════════════════════
+// FIX 4 — Normalización sin acentos
+// ══════════════════════════════════════════
+function quitarAcentos(str){
+  if(!str) return '';
+  return String(str).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim();
+}
+
+// ══════════════════════════════════════════
+// VALIDACIONES — Fix 4,5
+// ══════════════════════════════════════════
+// Regex INE: 6 letras + 8 números + H o M + 3 alfanuméricos
+const INE_REGEX=/^[A-Z]{6}[0-9]{8}[HM][A-Z0-9]{3}$/;
+
+function valNom(i){i.value=quitarAcentos(i.value);const ok=i.value.trim().length>=2;i.classList.toggle('ok',ok);i.classList.toggle('bad',!ok&&i.value.length>0);}
+function valAp(i,eid){i.value=quitarAcentos(i.value);const ok=i.value.trim().length>=2;i.classList.toggle('ok',ok);i.classList.toggle('bad',!ok&&i.value.length>0);document.getElementById(eid).classList.toggle('on',!ok&&i.value.length>0);}
+function valINE(i,cntId,erId){
+  const v=i.value.toUpperCase().replace(/[^A-Z0-9]/g,'');
+  i.value=v;
+  document.getElementById(cntId).textContent=`${v.length} / 18`;
+  const lenOk=v.length===18;
+  const fmtOk=lenOk&&INE_REGEX.test(v);
+  i.classList.toggle('ok',fmtOk);
+  i.classList.toggle('bad',!fmtOk&&v.length>0);
+  if(erId){
+    const el=document.getElementById(erId);
+    if(el){
+      if(!lenOk&&v.length>0) el.textContent='Debe tener exactamente 18 caracteres';
+      else if(lenOk&&!fmtOk) el.textContent='Formato inválido: 6 letras + 8 números + H/M + 3 alfanuméricos';
+      el.classList.toggle('on',!fmtOk&&v.length>0);
+    }
+  }
+}
+function valTel(i,fmtId,erId){const d=i.value.replace(/\D/g,'');i.value=d;const ok=d.length===10;i.classList.toggle('ok',ok);i.classList.toggle('bad',!ok&&d.length>0);if(erId)document.getElementById(erId).classList.toggle('on',!ok&&d.length>0);if(fmtId)document.getElementById(fmtId).textContent=ok?`${d.slice(0,2)}-${d.slice(2,6)}-${d.slice(6)}`:(d.length?`${d.length}/10`:'');}
 
 // ══════════════════════════════════════════
 // REGISTROS
@@ -1431,7 +1612,7 @@ function updateDash(){
     globalLbl.style.display='block';
     if(S.estadoTs){
       const mins=Math.round((new Date()-S.estadoTs)/60000);
-      globalLbl.textContent=`Todo el equipo · DB · hace ${mins<1?'<1':mins} min`;
+      globalLbl.textContent=`Todo el equipo · Sheets · hace ${mins<1?'<1':mins} min`;
     }else{
       globalLbl.textContent='Solo datos locales · actualiza estado para ver el equipo';
     }
@@ -1442,7 +1623,7 @@ function updateDash(){
   document.getElementById('st-err').textContent=errs;
   const badge=document.getElementById('sync-badge');
   if(pend>0){badge.textContent=pend;badge.style.display='inline-flex';document.getElementById('big-sync').classList.add('pending');document.getElementById('big-sync-lbl').textContent=`Sincronizar ${pend} pendiente${pend>1?'s':''}`;}
-  else{badge.style.display='none';document.getElementById('big-sync').classList.remove('pending');document.getElementById('big-sync-lbl').textContent='Sincronizar con DB';}
+  else{badge.style.display='none';document.getElementById('big-sync').classList.remove('pending');document.getElementById('big-sync-lbl').textContent='Sincronizar con servidor central';}
 
   // Cobertura por sección (casillas)
   const secMap={};
@@ -1519,24 +1700,35 @@ function updateDash(){
 // ══════════════════════════════════════════
 // SINCRONIZACIÓN
 // ══════════════════════════════════════════
-// syncOne: sincroniza UN registro específico inmediatamente
-// no depende del flag syncing — para uso post-guardado
+// syncOne: sincroniza un registro sin bloquear la UI
 async function syncOne(reg){
   if(!S.cfg.scriptUrl||!navigator.onLine) return;
   try{
     await fetch(S.cfg.scriptUrl,{
-      method:'POST', mode:'no-cors',
+      method:'POST',mode:'no-cors',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify(reg)
     });
-    reg.synced=true; reg.sync_error=null;
-    await dbPut('registros',reg);
-    await loadReg();
-    toast('✓ Sincronizado con DB','ok');
+    // no-cors no lanza error si llega — marcamos como sincronizado
+    const stored=S.registros.find(r=>r.id===reg.id)||reg;
+    stored.synced=true; stored.sync_error=null;
+    await dbPut('registros',stored);
+    // Actualizar solo los contadores sin re-renderizar toda la lista
+    S.registros=await dbAll('registros');
+    updateDash();
+    // Actualizar badge del botón sync
+    const pend=S.registros.filter(r=>!r.synced&&!r.sync_error).length;
+    const badge=document.getElementById('sync-badge');
+    if(badge) badge.style.display=pend>0?'inline-flex':'none';
+    if(badge) badge.textContent=pend;
+    toast('✓ Registro guardado y sincronizado','ok');
   }catch(e){
-    reg.sync_error=e.message||'Error de red';
-    await dbPut('registros',reg);
-    await loadReg();
+    const stored=S.registros.find(r=>r.id===reg.id)||reg;
+    stored.sync_error='Error de red';
+    await dbPut('registros',stored);
+    S.registros=await dbAll('registros');
+    updateDash();
+    toast('✓ Guardado localmente — sin conexión','');
   }
 }
 
@@ -1581,9 +1773,18 @@ async function testConn(){
   const url=document.getElementById('cfg-url').value.trim();
   if(!url){toast('Ingresa la URL','err');return;}
   if(!navigator.onLine){toast('Sin conexión','err');return;}
-  toast('Probando...','');
-  try{await fetch(url+'?test=1',{mode:'no-cors'});toast('✓ URL alcanzable','ok');}
-  catch(e){toast('⚠ Error','err');}
+  toast('Probando conexión...','');
+  try{
+    const resp=await fetch(url+'?test=1');
+    const data=await resp.json();
+    if(data.status==='OK'){
+      toast('✓ Conexión exitosa con el servidor','ok');
+    }else{
+      toast('⚠ Servidor respondió con error','err');
+    }
+  }catch(e){
+    toast('⚠ No se pudo conectar al servidor','err');
+  }
 }
 
 // ══════════════════════════════════════════
@@ -1623,7 +1824,7 @@ async function consultarCasilla(){
   if(!navigator.onLine){ toast('Sin conexión — consulta no disponible offline','err'); return; }
 
   const res = document.getElementById('q-result');
-  res.innerHTML = `<div class="consultando"><div class="mini-spin"></div>Consultando DB...</div>`;
+  res.innerHTML = `<div class="consultando"><div class="mini-spin"></div>Consultando Sheets...</div>`;
 
   try{
     const url = `${S.cfg.scriptUrl}?action=consulta&seccion=${encodeURIComponent(QS.seccion)}&casilla=${encodeURIComponent(QS.casilla)}`;
@@ -1645,7 +1846,7 @@ async function consultarCasilla(){
           <div style="text-align:center;padding:24px">
             <div class="libre-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
             <div style="font-family:var(--fh);font-size:17px;font-weight:700;color:var(--green)">Sin representantes asignados</div>
-            <div style="font-size:12px;color:var(--muted);margin-top:4px">Esta casilla está disponible en DB</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:4px">Esta casilla está disponible en Sheets</div>
           </div>
         </div>`;
       return;
@@ -1692,7 +1893,7 @@ async function consultarCasilla(){
       </div>`;
 
   } catch(e){
-    res.innerHTML = `<div class="consultando">⚠ Error al conectar con DB</div>`;
+    res.innerHTML = `<div class="consultando">⚠ Error al conectar con Sheets</div>`;
   }
 }
 
@@ -1730,8 +1931,8 @@ async function clearAll(){if(!confirm('¿Borrar TODOS los registros locales?'))r
 async function recuperarDeSheets(){
   if(!S.cfg.scriptUrl){toast('Configura la URL del Script primero','err');return;}
   if(!navigator.onLine){toast('Sin conexión a internet','err');return;}
-  if(!confirm('¿Descargar todos los registros desde DB?\n\nEsto reemplaza los datos locales con los del servidor.')) return;
-  showOv('Recuperando registros de DB...');
+  if(!confirm('¿Descargar todos los registros desde Google Sheets?\n\nEsto reemplaza los datos locales con los del servidor.')) return;
+  showOv('Recuperando registros de Sheets...');
   try{
     const resp=await fetch(S.cfg.scriptUrl+'?action=recuperar');
     const data=await resp.json();
@@ -1748,7 +1949,7 @@ async function recuperarDeSheets(){
     }
     await loadReg();
     hideOv();
-    toast(`✓ ${n} registros recuperados de DB`,'ok');
+    toast(`✓ ${n} registros recuperados de Sheets`,'ok');
   }catch(e){
     hideOv();
     toast('Error al recuperar: '+e.message,'err');
@@ -1759,15 +1960,44 @@ async function recuperarDeSheets(){
 // INIT
 // ══════════════════════════════════════════
 async function init(){
-  await openDB();await loadCfg();await loadCatalogo();await loadReg();
-  if(S.cfg.scriptUrl&&S.catalogo.length===0&&navigator.onLine)await descargarCatalogo();
-  document.addEventListener('click',e=>{
-    if(!e.target.closest('#c-sec-search')&&!e.target.closest('#c-sec-res'))document.getElementById('c-sec-res').classList.remove('open');
-    if(!e.target.closest('#g-sec-search')&&!e.target.closest('#g-sec-res'))document.getElementById('g-sec-res').classList.remove('open');
-    if(!e.target.closest('#q-sec-search')&&!e.target.closest('#q-sec-res'))document.getElementById('q-sec-res').classList.remove('open');
+  await openDB();
+  await loadCfg();
+  await loadCatalogo();
+  await loadReg();
+
+  // Fix 8 — deviceId
+  S.cfg.deviceId=await getDeviceId();
+
+  // Fix 10 — Mostrar pantalla de login si hay PIN configurado
+  if(S.cfg.pin){
+    const pm=document.getElementById('pin-muni-lbl');
+    if(pm&&S.cfg.municipio) pm.textContent=S.cfg.municipio;
+    // login-screen ya visible por defecto
+  }else{
+    // Sin PIN configurado → entrar directo
+    ocultarLogin();
+  }
+
+  // Fix 11 — Reset de inactividad en cualquier interacción
+  ['click','touchstart','keydown','scroll'].forEach(ev=>{
+    document.addEventListener(ev,resetInactividad,{passive:true});
   });
+
+  // Cerrar dropdowns de búsqueda al click fuera
+  document.addEventListener('click',e=>{
+    if(!e.target.closest('#c-sec-search')&&!e.target.closest('#c-sec-res'))
+      document.getElementById('c-sec-res').classList.remove('open');
+    if(!e.target.closest('#g-sec-search')&&!e.target.closest('#g-sec-res'))
+      document.getElementById('g-sec-res').classList.remove('open');
+    if(!e.target.closest('#q-sec-search')&&!e.target.closest('#q-sec-res'))
+      document.getElementById('q-sec-res').classList.remove('open');
+  });
+
   window.addEventListener('online',()=>toast('Conexión restaurada','ok'));
-  window.addEventListener('offline',()=>toast('Sin conexión — modo offline',''));
+  window.addEventListener('offline',()=>toast('Sin conexión — modo sin internet',''));
+
+  // Auto-descarga catálogo si hace falta
+  if(S.cfg.scriptUrl&&S.catalogo.length===0&&navigator.onLine) await descargarCatalogo();
 }
 init();
 </script>
