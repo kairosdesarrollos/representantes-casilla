@@ -517,7 +517,7 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
       <!-- BANNER ESTADO GLOBAL -->
       <div class="estado-bar" id="estado-bar">
         <div class="dot dot-no" id="estado-dot"></div>
-        <span id="estado-txt">Sin estado de Sheets</span>
+        <span id="estado-txt">Sin estado desde el servidor</span>
         <button onclick="descargarEstado()" id="estado-btn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
           Actualizar estado
@@ -561,13 +561,13 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
             <div class="rol-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
             <h4>Propietario</h4>
             <p>Representante titular</p>
-            <div class="rol-bloq-lbl" id="bloq-prop" style="display:none">Ya asignado en Sheets</div>
+            <div class="rol-bloq-lbl" id="bloq-prop" style="display:none">Ya asignado </div>
           </div>
           <div class="rol-card" id="rol-sup" onclick="selRolSiDisponible('SUPLENTE',this)">
             <div class="rol-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
             <h4>Suplente</h4>
             <p>Representante alterno</p>
-            <div class="rol-bloq-lbl" id="bloq-sup" style="display:none">Ya asignado en Sheets</div>
+            <div class="rol-bloq-lbl" id="bloq-sup" style="display:none">Ya asignado</div>
           </div>
         </div>
         <div class="errmsg" id="er-rol">Selecciona un rol</div>
@@ -867,7 +867,7 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
   <div class="consulta-wrap">
     <div class="consulta-hdr">
       <h2>Consulta de Casilla</h2>
-      <p>Busca quién está asignado a cualquier casilla en Sheets</p>
+      <p>Busca quién está asignado a cualquier casilla en el servidor central</p>
     </div>
 
     <div class="fld">
@@ -886,7 +886,7 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
 
     <button class="btn btn-primary" id="q-btn-consultar" onclick="consultarCasilla()" disabled style="margin-top:4px">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-      Consultar en Sheets
+      Consultar en el servidor
     </button>
 
     <div class="consulta-result" id="q-result"></div>
@@ -1311,7 +1311,7 @@ function actualizarBannerEstado(){
   if(!dot||!txt) return;
   if(!S.estadoTs){
     dot.className='dot dot-no';
-    txt.textContent='Sin estado de Sheets — toca Actualizar';
+    txt.textContent='Sin estado — toca Actualizar';
   }else{
     const mins=Math.round((new Date()-S.estadoTs)/60000);
     dot.className='dot dot-ok';
@@ -1353,7 +1353,7 @@ function actualizarRolesGlobal(){
 function selRolSiDisponible(rol, el){
   // Verificar si está bloqueado globalmente
   if(el.classList.contains('bloqueado')){
-    toast(`⚠ ${rol} ya está asignado en Sheets para esta casilla`,'err');
+    toast(`⚠ ${rol} ya está asignado en el servidor para esta casilla`,'err');
     return;
   }
   selRol(rol, el);
@@ -1824,7 +1824,7 @@ async function consultarCasilla(){
   if(!navigator.onLine){ toast('Sin conexión — consulta no disponible offline','err'); return; }
 
   const res = document.getElementById('q-result');
-  res.innerHTML = `<div class="consultando"><div class="mini-spin"></div>Consultando Sheets...</div>`;
+  res.innerHTML = `<div class="consultando"><div class="mini-spin"></div>Consultando en el servidor central...</div>`;
 
   try{
     const url = `${S.cfg.scriptUrl}?action=consulta&seccion=${encodeURIComponent(QS.seccion)}&casilla=${encodeURIComponent(QS.casilla)}`;
@@ -1846,7 +1846,7 @@ async function consultarCasilla(){
           <div style="text-align:center;padding:24px">
             <div class="libre-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
             <div style="font-family:var(--fh);font-size:17px;font-weight:700;color:var(--green)">Sin representantes asignados</div>
-            <div style="font-size:12px;color:var(--muted);margin-top:4px">Esta casilla está disponible en Sheets</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:4px">Esta casilla está disponible</div>
           </div>
         </div>`;
       return;
@@ -1893,7 +1893,7 @@ async function consultarCasilla(){
       </div>`;
 
   } catch(e){
-    res.innerHTML = `<div class="consultando">⚠ Error al conectar con Sheets</div>`;
+    res.innerHTML = `<div class="consultando">⚠ Error al conectar con el servidor central</div>`;
   }
 }
 
