@@ -38,3 +38,13 @@ No tests, no linter, no build step. Changes are made directly to `index.html`.
 ## Deployment
 
 Hosted via GitHub Pages from the `main` branch.
+
+## Project Idea
+
+Read `PROJECT_IDEA.md` for the full concept — what the app does, who it's for, the core workflow, design decisions, data flow, and scope boundaries. Any shift in the product concept, target users, workflow, or scope must be reflected in `PROJECT_IDEA.md`.
+
+## Technical Reference
+
+Read `TECHNICAL_REFERENCE.md` for a complete technical map of the codebase — global state, IndexedDB schema, all functions with line numbers, HTML element IDs, CSS class conventions, backend endpoints, validation rules, and capture flow details.
+
+**Important**: Any change to the technical architecture (new functions, renamed IDs, new screens, schema changes, new endpoints, CSS variable changes, etc.) must be reflected in `TECHNICAL_REFERENCE.md` to keep it in sync with the code.
