@@ -649,9 +649,11 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
       <div class="fld"><label>Apellido Materno <span style="font-weight:400;color:var(--light)">(opcional)</span></label>
         <input type="text" id="c-mat" autocapitalize="characters">
       </div>
-      <div class="fld"><label>Clave Elector INE <span style="font-weight:400;color:var(--light)">18 caracteres</span></label>
-        <input type="text" id="c-ine" placeholder="ABCDEF12345678H801" oninput="valINE(this,'ine-cnt','er-cine')" maxlength="18" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" style="font-family:var(--fm);letter-spacing:.5px;text-transform:uppercase">
+      <div class="fld"><label>Clave de Elector (INE)</label>
+        <input type="text" id="c-ine" placeholder="Ej: GOML850312HDFRRN09" oninput="valINE(this,'ine-cnt','er-cine')" maxlength="18" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" style="font-family:var(--fm);letter-spacing:.5px;text-transform:uppercase">
         <div class="cnt" id="ine-cnt">0 / 18</div>
+        <div class="hint">Anverso de la credencial INE · 18 caracteres en total</div>
+        <div class="errmsg" id="er-cine">Formato incorrecto — revisa la credencial INE</div>        <div class="cnt" id="ine-cnt">0 / 18</div>
         <div class="errmsg" id="er-cine">Debe tener exactamente 18 caracteres</div>
       </div>
       <div class="fld"><label>Teléfono <span style="font-weight:400;color:var(--light)">10 dígitos</span></label>
@@ -792,10 +794,11 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
       <div class="fld"><label>Apellido Materno <span style="font-weight:400;color:var(--light)">(opcional)</span></label>
         <input type="text" id="g-mat" autocapitalize="characters">
       </div>
-      <div class="fld"><label>Clave Elector INE <span style="font-weight:400;color:var(--light)">18 caracteres</span></label>
-        <input type="text" id="g-ine" placeholder="ABCDEF12345678H801" oninput="valINE(this,'g-ine-cnt','er-gine')" maxlength="18" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" style="font-family:var(--fm);letter-spacing:.5px;text-transform:uppercase">
+      <div class="fld"><label>Clave de Elector (INE)</label>
+        <input type="text" id="g-ine" placeholder="Ej: GOML850312HDFRRN09" oninput="valINE(this,'g-ine-cnt','er-gine')" maxlength="18" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" style="font-family:var(--fm);letter-spacing:.5px;text-transform:uppercase">
         <div class="cnt" id="g-ine-cnt">0 / 18</div>
-        <div class="errmsg" id="er-gine">Debe tener exactamente 18 caracteres</div>
+        <div class="hint">Anverso de la credencial INE · 18 caracteres en total</div>
+        <div class="errmsg" id="er-gine">Formato incorrecto — revisa la credencial INE</div>
       </div>
       <div class="fld"><label>Teléfono <span style="font-weight:400;color:var(--light)">10 dígitos</span></label>
         <input type="tel" id="g-tel" placeholder="5512345678" oninput="valTel(this,'g-tel-fmt','er-gtel')" maxlength="10" inputmode="numeric">
@@ -1141,9 +1144,11 @@ async function guardarCasilla(){
   const reg={tipo_reg:'casilla',seccion:S.cSeccion.seccion,id_casilla:S.cCasilla.id_casilla,tipo_casilla:S.cCasilla.tipo_casilla,nombre:`${nom} ${pat} ${mat}`.trim(),nombre_p:nom,ap_pat:pat,ap_mat:mat,ine,telefono:telF,rol:S.cRol,partido:S.cPartido,notas:not,foto_frente:S.fotoFrente||null,foto_reverso:S.fotoReverso||null,capturado_por:S.cfg.capturista||'',username:S.cfg.username||'',device_id:S.cfg.deviceId||'',timestamp:new Date().toISOString(),synced:false,sync_error:null};
   const id=await dbPut('registros',reg);
   reg.id=id;
-  await loadReg();
-  toast('✓ Registro guardado','ok');
+  // Navegar inmediatamente — el usuario ve la confirmación sin delay
+  toast('✓ Guardado — sincronizando...','ok');
   resetCasilla();volverTipo();showScreen('registros');
+  // Cargar y sincronizar en segundo plano
+  await loadReg();
   syncOne({...reg, id});
 }
 function resetCasilla(){
@@ -1254,9 +1259,9 @@ async function guardarGeneral(){
   };
   const id=await dbPut('registros',reg);
   reg.id=id;
-  await loadReg();
-  toast('✓ General guardado','ok');
+  toast('✓ Guardado — sincronizando...','ok');
   resetGeneral();volverTipo();showScreen('registros');
+  await loadReg();
   syncOne({...reg, id});
 }
 function resetGeneral(){
@@ -1780,8 +1785,21 @@ function valINE(i,cntId,erId){
   if(erId){
     const el=document.getElementById(erId);
     if(el){
-      if(!lenOk&&v.length>0) el.textContent='Debe tener exactamente 18 caracteres';
-      else if(lenOk&&!fmtOk) el.textContent='Formato inválido: 6 letras + 8 números + H/M + 3 alfanuméricos';
+      if(!lenOk&&v.length>0){
+        el.textContent=v.length<18
+          ? `Faltan ${18-v.length} caracteres — busca la clave en el anverso de tu INE`
+          : 'Demasiados caracteres — verifica la credencial';
+      } else if(lenOk&&!fmtOk){
+        // Ayuda específica según posición incorrecta
+        if(!/^[A-Z]{6}/.test(v))
+          el.textContent='Las primeras 6 posiciones deben ser letras';
+        else if(!/^[A-Z]{6}[0-9]{8}/.test(v))
+          el.textContent='Las posiciones 7-14 deben ser números';
+        else if(!/^[A-Z]{6}[0-9]{8}[HM]/.test(v))
+          el.textContent='La posición 15 debe ser H (hombre) o M (mujer)';
+        else
+          el.textContent='Las últimas 3 posiciones deben ser letras o números';
+      }
       el.classList.toggle('on',!fmtOk&&v.length>0);
     }
   }
@@ -1850,7 +1868,21 @@ function updateDash(){
 
   // Cobertura por sección (casillas)
   const secMap={};
-  S.catalogo.forEach(c=>{if(!secMap[c.seccion])secMap[c.seccion]={tot:0,cov:0};secMap[c.seccion].tot++;if(S.registros.some(x=>x.tipo_reg==='casilla'&&x.seccion===c.seccion&&x.id_casilla===c.id_casilla))secMap[c.seccion].cov++;});
+  // Cobertura por sección: prioriza estadoGlobal (servidor) si está disponible
+  const secMap={};
+  S.catalogo.forEach(c=>{
+    if(!secMap[c.seccion]) secMap[c.seccion]={tot:0,cov:0};
+    secMap[c.seccion].tot++;
+    // Verificar cobertura: primero en estadoGlobal (servidor), luego local sincronizado
+    const enServidor=S.estadoGlobal.some(x=>
+      String(x.seccion)===String(c.seccion)&&String(x.id_casilla)===String(c.id_casilla)
+    );
+    const enLocal=S.registros.some(x=>
+      x.tipo_reg==='casilla'&&x.synced&&
+      String(x.seccion)===String(c.seccion)&&x.id_casilla===c.id_casilla
+    );
+    if(enServidor||enLocal) secMap[c.seccion].cov++;
+  });
   const keys=Object.keys(secMap).sort((a,b)=>Number(a)-Number(b));
   const list=document.getElementById('cov-list');
   if(!keys.length){list.innerHTML='<div style="padding:28px;text-align:center;font-size:13px;color:var(--muted)">Descarga el catálogo para ver cobertura</div>';}
