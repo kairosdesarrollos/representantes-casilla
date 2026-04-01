@@ -1926,32 +1926,48 @@ function updateDash(){
 // syncOne: sincroniza un registro sin bloquear la UI
 async function syncOne(reg){
   if(!S.cfg.scriptUrl||!navigator.onLine) return;
+  const actualizarEstado=async(stored,synced,err)=>{
+    stored.synced=synced; stored.sync_error=err;
+    await dbPut('registros',stored);
+    S.registros=await dbAll('registros');
+    updateDash();
+    const pend=S.registros.filter(r=>!r.synced&&!r.sync_error).length;
+    const badge=document.getElementById('sync-badge');
+    if(badge){badge.style.display=pend>0?'inline-flex':'none';badge.textContent=pend;}
+  };
+  const stored=S.registros.find(r=>r.id===reg.id)||reg;
   try{
-    await fetch(S.cfg.scriptUrl,{
-      method:'POST',mode:'no-cors',
+    // Intentar con CORS para poder leer la respuesta
+    const resp=await fetch(S.cfg.scriptUrl,{
+      method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify(reg)
     });
-    // no-cors no lanza error si llega — marcamos como sincronizado
-    const stored=S.registros.find(r=>r.id===reg.id)||reg;
-    stored.synced=true; stored.sync_error=null;
-    await dbPut('registros',stored);
-    // Actualizar solo los contadores sin re-renderizar toda la lista
-    S.registros=await dbAll('registros');
-    updateDash();
-    // Actualizar badge del botón sync
-    const pend=S.registros.filter(r=>!r.synced&&!r.sync_error).length;
-    const badge=document.getElementById('sync-badge');
-    if(badge) badge.style.display=pend>0?'inline-flex':'none';
-    if(badge) badge.textContent=pend;
-    toast('✓ Registro guardado y sincronizado','ok');
-  }catch(e){
-    const stored=S.registros.find(r=>r.id===reg.id)||reg;
-    stored.sync_error='Error de red';
-    await dbPut('registros',stored);
-    S.registros=await dbAll('registros');
-    updateDash();
-    toast('✓ Guardado localmente — sin conexión','');
+    const data=await resp.json();
+    if(data.status==='OK'){
+      await actualizarEstado(stored,true,null);
+      toast('✓ Registro guardado y sincronizado','ok');
+    } else if(data.status==='DUPLICATE'){
+      await actualizarEstado(stored,false,'DUPLICADO EN SERVIDOR: '+data.message);
+      toast('⚠ '+data.message,'err',5000);
+    } else {
+      await actualizarEstado(stored,false,data.message||'Error del servidor');
+      toast('Error: '+data.message,'err');
+    }
+  }catch(corsErr){
+    // CORS bloqueado — fallback a no-cors
+    try{
+      await fetch(S.cfg.scriptUrl,{
+        method:'POST',mode:'no-cors',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(reg)
+      });
+      await actualizarEstado(stored,true,null);
+      toast('✓ Guardado y enviado al servidor','ok');
+    }catch(e){
+      await actualizarEstado(stored,false,'Sin conexion');
+      toast('Sin conexion — guardado localmente','');
+    }
   }
 }
 
@@ -2190,8 +2206,10 @@ async function init(){
 
   // FIX 4 — URL precargada desde parametro (nunca visible al capturista)
   const urlParams=new URLSearchParams(window.location.search);
-  if(urlParams.get('srv')){
-    const srvUrl=decodeURIComponent(urlParams.get('srv'));
+  // Acepta tanto ?srv= como ?svr= (tolerancia a error tipográfico)
+  const srvParam = urlParams.get('srv') || urlParams.get('svr');
+  if(srvParam){
+    const srvUrl=decodeURIComponent(srvParam);
     S.cfg.scriptUrl=srvUrl;
     await dbPut('config',{k:'scriptUrl',v:srvUrl});
     document.getElementById('cfg-url').value=srvUrl;
