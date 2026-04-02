@@ -1527,8 +1527,17 @@ async function doLoginUsuario(){
   const errEl  = document.getElementById('login-err');
 
   if(!userId||!nip){ mostrarErrLogin('Ingresa tu número de usuario y NIP'); return; }
-  if(!S.cfg.scriptUrl){ mostrarErrLogin('El sistema no está configurado. Contacta al administrador.'); return; }
-  if(!navigator.onLine){ mostrarErrLogin('Sin conexión. Verifica tu internet.'); return; }
+  if(!navigator.onLine){
+    // Sin internet: intentar con PIN local guardado
+    if(S.cfg.pin && nip === S.cfg.pin){
+      U.id=userId; U.nip=nip;
+      ocultarLogin(); return;
+    }
+    mostrarErrLogin('Sin conexión. Verifica tu internet.'); return;
+  }
+  if(!S.cfg.scriptUrl){
+    mostrarErrLogin('El sistema no está configurado. Contacta al administrador.'); return;
+  }
 
   document.getElementById('login-btn').disabled=true;
   document.getElementById('login-btn').textContent='Verificando...';
@@ -1542,7 +1551,6 @@ async function doLoginUsuario(){
       U.correo=d.usuario.correo||'';
       U.nip=nip;
       U.primerIngreso=!!d.usuario.primer_ingreso;
-      // Precargar config desde el servidor
       if(d.config){
         if(d.config.municipio) S.cfg.municipio=d.config.municipio;
         if(d.config.partido)   S.cfg.partidos=d.config.partido;
@@ -1550,7 +1558,6 @@ async function doLoginUsuario(){
       if(U.primerIngreso){
         mostrarPrimerIngreso();
       }else{
-        // Cargar datos del usuario en cfg
         S.cfg.capturista=U.correo;
         S.cfg.username=U.username;
         if(d.config&&d.config.municipio){
@@ -1562,11 +1569,27 @@ async function doLoginUsuario(){
       }
     }else if(d.status==='BLOQUEADO'){
       mostrarErrLogin('⛔ Usuario bloqueado. Contacta al administrador.');
+    }else if(d.status==='ERROR'&&d.message&&d.message.includes('no encontrad')){
+      // Endpoint no existe aún en el Script — fallback a PIN local
+      if(S.cfg.pin && nip===S.cfg.pin){
+        U.id=userId; U.nip=nip;
+        toast('Acceso con PIN local — actualiza el servidor para usar usuarios','warn',4000);
+        ocultarLogin();
+      }else{
+        mostrarErrLogin('El servidor aún no tiene el módulo de usuarios. Verifica con el administrador.');
+      }
     }else{
       mostrarErrLogin(d.message||'Usuario o NIP incorrecto');
     }
   }catch(e){
-    mostrarErrLogin('Error de conexión. Intenta de nuevo.');
+    // Error de red o el endpoint no existe — fallback a PIN local
+    if(S.cfg.pin && nip===S.cfg.pin){
+      U.id=userId; U.nip=nip;
+      toast('Acceso con PIN local — el servidor no responde','warn',4000);
+      ocultarLogin();
+    }else{
+      mostrarErrLogin('No se pudo conectar al servidor. Si tienes PIN configurado, úsalo directamente.');
+    }
   }
   document.getElementById('login-btn').disabled=false;
   document.getElementById('login-btn').innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg> Ingresar';
