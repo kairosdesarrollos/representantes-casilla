@@ -978,7 +978,12 @@ const S={
   catalogo:[], registros:[], filtro:'all',
   // estado global desde Sheets
   estadoGlobal:[], generalesGlobal:[], estadoTs:null,
-  cfg:{municipio:'',capturista:'',username:'',scriptUrl:'',partidos:'PAN',pin:'',inact:'30',deviceId:''}
+  // URL precargada — siempre disponible aunque no haya parámetro en la URL
+  cfg:{
+    municipio:'',capturista:'',username:'',
+    scriptUrl:'https://script.google.com/macros/s/AKfycbwo9E1TflmsiA7HfRzM40xBCceKI7GPUHLUWujOgiTdbtNNXuPwR4ZUNMfzhrwYYBz-/exec',
+    partidos:'PAN',pin:'',inact:'30',deviceId:''
+  }
 };
 
 // ══════════════════════════════════════════
@@ -1524,27 +1529,39 @@ const U = { id:null, username:'', correo:'', nip:'', primerIngreso:false };
 async function doLoginUsuario(){
   const userId = document.getElementById('login-usuario').value.trim().padStart(2,'0');
   const nip    = document.getElementById('login-nip').value.trim();
-  const errEl  = document.getElementById('login-err');
 
   if(!userId||!nip){ mostrarErrLogin('Ingresa tu número de usuario y NIP'); return; }
+
+  // Asegurar que scriptUrl esté disponible desde IndexedDB o el valor hardcodeado
+  if(!S.cfg.scriptUrl){
+    const items=await dbAll('config');
+    const savedUrl=items.find(i=>i.k==='scriptUrl')?.v;
+    if(savedUrl) S.cfg.scriptUrl=savedUrl;
+  }
+
   if(!navigator.onLine){
-    // Sin internet: intentar con PIN local guardado
-    if(S.cfg.pin && nip === S.cfg.pin){
+    if(S.cfg.pin && nip===S.cfg.pin){
       U.id=userId; U.nip=nip;
       ocultarLogin(); return;
     }
-    mostrarErrLogin('Sin conexión. Verifica tu internet.'); return;
-  }
-  if(!S.cfg.scriptUrl){
-    mostrarErrLogin('El sistema no está configurado. Contacta al administrador.'); return;
+    mostrarErrLogin('Sin conexión a internet. Activa el wifi o datos móviles.'); return;
   }
 
-  document.getElementById('login-btn').disabled=true;
-  document.getElementById('login-btn').textContent='Verificando...';
+  if(!S.cfg.scriptUrl){
+    mostrarErrLogin('⚠ Error de configuración. Cierra la app, abre el enlace original que te compartió el coordinador y vuelve a intentar.');
+    return;
+  }
+
+  const btn=document.getElementById('login-btn');
+  btn.disabled=true;
+  btn.textContent='Verificando...';
+  document.getElementById('login-err').classList.remove('on');
 
   try{
-    const r=await fetch(`${S.cfg.scriptUrl}?action=loginUsuario&user=${encodeURIComponent(userId)}&nip=${encodeURIComponent(nip)}&device=${encodeURIComponent(S.cfg.deviceId||'')}`);
+    const url=`${S.cfg.scriptUrl}?action=loginUsuario&user=${encodeURIComponent(userId)}&nip=${encodeURIComponent(nip)}&device=${encodeURIComponent(S.cfg.deviceId||'')}`;
+    const r=await fetch(url);
     const d=await r.json();
+
     if(d.status==='OK'){
       U.id=userId;
       U.username=d.usuario.username||'';
@@ -1552,8 +1569,8 @@ async function doLoginUsuario(){
       U.nip=nip;
       U.primerIngreso=!!d.usuario.primer_ingreso;
       if(d.config){
-        if(d.config.municipio) S.cfg.municipio=d.config.municipio;
-        if(d.config.partido)   S.cfg.partidos=d.config.partido;
+        if(d.config.municipio){ S.cfg.municipio=d.config.municipio; await dbPut('config',{k:'municipio',v:d.config.municipio}); }
+        if(d.config.partido)  { S.cfg.partidos=d.config.partido;   await dbPut('config',{k:'partidos',v:d.config.partido}); }
       }
       if(U.primerIngreso){
         mostrarPrimerIngreso();
@@ -1561,38 +1578,30 @@ async function doLoginUsuario(){
         S.cfg.capturista=U.correo;
         S.cfg.username=U.username;
         if(d.config&&d.config.municipio){
-          document.getElementById('cfg-muni').value=d.config.municipio;
-          document.getElementById('hdr-muni').textContent=d.config.municipio;
-          document.getElementById('dash-muni').textContent=d.config.municipio;
+          const m=d.config.municipio;
+          document.getElementById('cfg-muni').value=m;
+          document.getElementById('hdr-muni').textContent=m;
+          document.getElementById('dash-muni').textContent=m;
         }
         ocultarLogin();
       }
-    }else if(d.status==='BLOQUEADO'){
+    } else if(d.status==='BLOQUEADO'){
       mostrarErrLogin('⛔ Usuario bloqueado. Contacta al administrador.');
-    }else if(d.status==='ERROR'&&d.message&&d.message.includes('no encontrad')){
-      // Endpoint no existe aún en el Script — fallback a PIN local
-      if(S.cfg.pin && nip===S.cfg.pin){
-        U.id=userId; U.nip=nip;
-        toast('Acceso con PIN local — actualiza el servidor para usar usuarios','warn',4000);
-        ocultarLogin();
-      }else{
-        mostrarErrLogin('El servidor aún no tiene el módulo de usuarios. Verifica con el administrador.');
-      }
-    }else{
+    } else {
       mostrarErrLogin(d.message||'Usuario o NIP incorrecto');
     }
   }catch(e){
-    // Error de red o el endpoint no existe — fallback a PIN local
+    // Fallback a PIN local si hay error de red
     if(S.cfg.pin && nip===S.cfg.pin){
       U.id=userId; U.nip=nip;
-      toast('Acceso con PIN local — el servidor no responde','warn',4000);
+      toast('Acceso local — sin respuesta del servidor','warn',4000);
       ocultarLogin();
     }else{
-      mostrarErrLogin('No se pudo conectar al servidor. Si tienes PIN configurado, úsalo directamente.');
+      mostrarErrLogin('No se pudo conectar. Verifica tu internet e intenta de nuevo.');
     }
   }
-  document.getElementById('login-btn').disabled=false;
-  document.getElementById('login-btn').innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg> Ingresar';
+  btn.disabled=false;
+  btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg> Ingresar';
 }
 
 function mostrarErrLogin(msg){
