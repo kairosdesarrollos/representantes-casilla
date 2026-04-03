@@ -1526,83 +1526,87 @@ function procesarFoto(inp,lado){
 // ══════════════════════════════════════════
 const U = { id:null, username:'', correo:'', nip:'', primerIngreso:false };
 
+// ══ JSONP — evita bloqueo CORS en Chrome móvil con Apps Script ══
+function fetchJSONP(url){
+  return new Promise((resolve,reject)=>{
+    const cbName='_kcb'+Date.now()+Math.floor(Math.random()*9999);
+    const script=document.createElement('script');
+    const timer=setTimeout(()=>{ cleanup(); reject(new Error('timeout')); },12000);
+    function cleanup(){ clearTimeout(timer); try{delete window[cbName];}catch(e){} if(script.parentNode)script.parentNode.removeChild(script); }
+    window[cbName]=data=>{ cleanup(); resolve(data); };
+    script.onerror=()=>{ cleanup(); reject(new Error('script_error')); };
+    script.src=url+(url.includes('?')?'&':'?')+'callback='+cbName;
+    document.head.appendChild(script);
+  });
+}
+
 async function doLoginUsuario(){
-  const userId = document.getElementById('login-usuario').value.trim().padStart(2,'0');
-  const nip    = document.getElementById('login-nip').value.trim();
-
+  const userId=document.getElementById('login-usuario').value.trim().padStart(2,'0');
+  const nip=document.getElementById('login-nip').value.trim();
   if(!userId||!nip){ mostrarErrLogin('Ingresa tu número de usuario y NIP'); return; }
-
-  // Asegurar que scriptUrl esté disponible desde IndexedDB o el valor hardcodeado
   if(!S.cfg.scriptUrl){
     const items=await dbAll('config');
-    const savedUrl=items.find(i=>i.k==='scriptUrl')?.v;
-    if(savedUrl) S.cfg.scriptUrl=savedUrl;
+    const saved=items.find(i=>i.k==='scriptUrl')?.v;
+    if(saved) S.cfg.scriptUrl=saved;
   }
-
+  if(!S.cfg.scriptUrl){ mostrarErrLogin('Sin configuración. Abre el enlace del coordinador.'); return; }
   if(!navigator.onLine){
-    if(S.cfg.pin && nip===S.cfg.pin){
-      U.id=userId; U.nip=nip;
-      ocultarLogin(); return;
-    }
-    mostrarErrLogin('Sin conexión a internet. Activa el wifi o datos móviles.'); return;
+    if(S.cfg.pin&&nip===S.cfg.pin){ U.id=userId;U.nip=nip;ocultarLogin();return; }
+    mostrarErrLogin('Sin conexión a internet.'); return;
   }
-
-  if(!S.cfg.scriptUrl){
-    mostrarErrLogin('⚠ Error de configuración. Cierra la app, abre el enlace original que te compartió el coordinador y vuelve a intentar.');
-    return;
-  }
-
   const btn=document.getElementById('login-btn');
-  btn.disabled=true;
-  btn.textContent='Verificando...';
+  btn.disabled=true; btn.textContent='Verificando...';
   document.getElementById('login-err').classList.remove('on');
-
+  const loginUrl=`${S.cfg.scriptUrl}?action=loginUsuario&user=${encodeURIComponent(userId)}&nip=${encodeURIComponent(nip)}&device=${encodeURIComponent(S.cfg.deviceId||'')}`;
   try{
-    const url=`${S.cfg.scriptUrl}?action=loginUsuario&user=${encodeURIComponent(userId)}&nip=${encodeURIComponent(nip)}&device=${encodeURIComponent(S.cfg.deviceId||'')}`;
-    const r=await fetch(url);
-    const d=await r.json();
-
-    if(d.status==='OK'){
-      U.id=userId;
-      U.username=d.usuario.username||'';
-      U.correo=d.usuario.correo||'';
-      U.nip=nip;
-      U.primerIngreso=!!d.usuario.primer_ingreso;
-      if(d.config){
-        if(d.config.municipio){ S.cfg.municipio=d.config.municipio; await dbPut('config',{k:'municipio',v:d.config.municipio}); }
-        if(d.config.partido)  { S.cfg.partidos=d.config.partido;   await dbPut('config',{k:'partidos',v:d.config.partido}); }
-      }
-      if(U.primerIngreso){
-        mostrarPrimerIngreso();
-      }else{
-        S.cfg.capturista=U.correo;
-        S.cfg.username=U.username;
-        if(d.config&&d.config.municipio){
-          const m=d.config.municipio;
-          document.getElementById('cfg-muni').value=m;
-          document.getElementById('hdr-muni').textContent=m;
-          document.getElementById('dash-muni').textContent=m;
-        }
-        ocultarLogin();
-      }
-    } else if(d.status==='BLOQUEADO'){
-      mostrarErrLogin('⛔ Usuario bloqueado. Contacta al administrador.');
-    } else {
-      mostrarErrLogin(d.message||'Usuario o NIP incorrecto');
-    }
+    // JSONP evita el bloqueo CORS/redirect de Apps Script en Chrome móvil
+    const d=await fetchJSONP(loginUrl);
+    await manejarRespuestaLogin(d,userId,nip);
   }catch(e){
-    // Fallback a PIN local si hay error de red
-    if(S.cfg.pin && nip===S.cfg.pin){
-      U.id=userId; U.nip=nip;
-      toast('Acceso local — sin respuesta del servidor','warn',4000);
-      ocultarLogin();
-    }else{
-      mostrarErrLogin('No se pudo conectar. Verifica tu internet e intenta de nuevo.');
+    // Fallback: fetch normal
+    try{
+      const r=await fetch(loginUrl);
+      const d=await r.json();
+      await manejarRespuestaLogin(d,userId,nip);
+    }catch(e2){
+      if(S.cfg.pin&&nip===S.cfg.pin){
+        U.id=userId;U.nip=nip;
+        toast('Acceso local activo','warn',3000);
+        ocultarLogin();
+      }else{
+        mostrarErrLogin('No se pudo conectar. Verifica tu internet.');
+      }
     }
   }
   btn.disabled=false;
   btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg> Ingresar';
 }
+
+async function manejarRespuestaLogin(d,userId,nip){
+  if(d.status==='OK'){
+    U.id=userId; U.username=d.usuario?.username||''; U.correo=d.usuario?.correo||''; U.nip=nip;
+    U.primerIngreso=!!(d.usuario?.primer_ingreso);
+    if(d.config?.municipio){ S.cfg.municipio=d.config.municipio; await dbPut('config',{k:'municipio',v:d.config.municipio}); }
+    if(d.config?.partido){   S.cfg.partidos=d.config.partido;   await dbPut('config',{k:'partidos',v:d.config.partido}); }
+    if(U.primerIngreso){
+      mostrarPrimerIngreso();
+    }else{
+      S.cfg.capturista=U.correo; S.cfg.username=U.username;
+      if(d.config?.municipio){
+        const m=d.config.municipio;
+        document.getElementById('cfg-muni').value=m;
+        document.getElementById('hdr-muni').textContent=m;
+        document.getElementById('dash-muni').textContent=m;
+      }
+      ocultarLogin();
+    }
+  }else if(d.status==='BLOQUEADO'){
+    mostrarErrLogin('⛔ Usuario bloqueado. Contacta al administrador.');
+  }else{
+    mostrarErrLogin(d.message||'Usuario o NIP incorrecto');
+  }
+}
+
 
 function mostrarErrLogin(msg){
   const el=document.getElementById('login-err');
