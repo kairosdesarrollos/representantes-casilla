@@ -649,11 +649,9 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
       <div class="fld"><label>Apellido Materno <span style="font-weight:400;color:var(--light)">(opcional)</span></label>
         <input type="text" id="c-mat" autocapitalize="characters">
       </div>
-      <div class="fld"><label>Clave de Elector (INE)</label>
-        <input type="text" id="c-ine" placeholder="Ej: GOML850312HDFRRN09" oninput="valINE(this,'ine-cnt','er-cine')" maxlength="18" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" style="font-family:var(--fm);letter-spacing:.5px;text-transform:uppercase">
+      <div class="fld"><label>Clave Elector INE <span style="font-weight:400;color:var(--light)">18 caracteres</span></label>
+        <input type="text" id="c-ine" placeholder="ABCD123456EFGH7801" oninput="valINE(this,'ine-cnt','er-cine')" maxlength="18" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" style="font-family:var(--fm);letter-spacing:.5px;text-transform:uppercase">
         <div class="cnt" id="ine-cnt">0 / 18</div>
-        <div class="hint">Anverso de la credencial INE · 18 caracteres en total</div>
-        <div class="errmsg" id="er-cine">Formato incorrecto — revisa la credencial INE</div>        <div class="cnt" id="ine-cnt">0 / 18</div>
         <div class="errmsg" id="er-cine">Debe tener exactamente 18 caracteres</div>
       </div>
       <div class="fld"><label>Teléfono <span style="font-weight:400;color:var(--light)">10 dígitos</span></label>
@@ -794,11 +792,10 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
       <div class="fld"><label>Apellido Materno <span style="font-weight:400;color:var(--light)">(opcional)</span></label>
         <input type="text" id="g-mat" autocapitalize="characters">
       </div>
-      <div class="fld"><label>Clave de Elector (INE)</label>
-        <input type="text" id="g-ine" placeholder="Ej: GOML850312HDFRRN09" oninput="valINE(this,'g-ine-cnt','er-gine')" maxlength="18" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" style="font-family:var(--fm);letter-spacing:.5px;text-transform:uppercase">
+      <div class="fld"><label>Clave Elector INE <span style="font-weight:400;color:var(--light)">18 caracteres</span></label>
+        <input type="text" id="g-ine" placeholder="ABCD123456EFGH7801" oninput="valINE(this,'g-ine-cnt','er-gine')" maxlength="18" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" style="font-family:var(--fm);letter-spacing:.5px;text-transform:uppercase">
         <div class="cnt" id="g-ine-cnt">0 / 18</div>
-        <div class="hint">Anverso de la credencial INE · 18 caracteres en total</div>
-        <div class="errmsg" id="er-gine">Formato incorrecto — revisa la credencial INE</div>
+        <div class="errmsg" id="er-gine">Debe tener exactamente 18 caracteres</div>
       </div>
       <div class="fld"><label>Teléfono <span style="font-weight:400;color:var(--light)">10 dígitos</span></label>
         <input type="tel" id="g-tel" placeholder="5512345678" oninput="valTel(this,'g-tel-fmt','er-gtel')" maxlength="10" inputmode="numeric">
@@ -978,12 +975,7 @@ const S={
   catalogo:[], registros:[], filtro:'all',
   // estado global desde Sheets
   estadoGlobal:[], generalesGlobal:[], estadoTs:null,
-  // URL precargada — siempre disponible aunque no haya parámetro en la URL
-  cfg:{
-    municipio:'',capturista:'',username:'',
-    scriptUrl:'https://script.google.com/macros/s/AKfycbwo9E1TflmsiA7HfRzM40xBCceKI7GPUHLUWujOgiTdbtNNXuPwR4ZUNMfzhrwYYBz-/exec',
-    partidos:'PAN',pin:'',inact:'30',deviceId:''
-  }
+  cfg:{municipio:'',capturista:'',username:'',scriptUrl:'',partidos:'PAN',pin:'',inact:'30',deviceId:''}
 };
 
 // ══════════════════════════════════════════
@@ -1149,11 +1141,9 @@ async function guardarCasilla(){
   const reg={tipo_reg:'casilla',seccion:S.cSeccion.seccion,id_casilla:S.cCasilla.id_casilla,tipo_casilla:S.cCasilla.tipo_casilla,nombre:`${nom} ${pat} ${mat}`.trim(),nombre_p:nom,ap_pat:pat,ap_mat:mat,ine,telefono:telF,rol:S.cRol,partido:S.cPartido,notas:not,foto_frente:S.fotoFrente||null,foto_reverso:S.fotoReverso||null,capturado_por:S.cfg.capturista||'',username:S.cfg.username||'',device_id:S.cfg.deviceId||'',timestamp:new Date().toISOString(),synced:false,sync_error:null};
   const id=await dbPut('registros',reg);
   reg.id=id;
-  // Navegar inmediatamente — el usuario ve la confirmación sin delay
-  toast('✓ Guardado — sincronizando...','ok');
-  resetCasilla();volverTipo();showScreen('registros');
-  // Cargar y sincronizar en segundo plano
   await loadReg();
+  toast('✓ Registro guardado','ok');
+  resetCasilla();volverTipo();showScreen('registros');
   syncOne({...reg, id});
 }
 function resetCasilla(){
@@ -1264,9 +1254,9 @@ async function guardarGeneral(){
   };
   const id=await dbPut('registros',reg);
   reg.id=id;
-  toast('✓ Guardado — sincronizando...','ok');
-  resetGeneral();volverTipo();showScreen('registros');
   await loadReg();
+  toast('✓ General guardado','ok');
+  resetGeneral();volverTipo();showScreen('registros');
   syncOne({...reg, id});
 }
 function resetGeneral(){
@@ -1526,87 +1516,56 @@ function procesarFoto(inp,lado){
 // ══════════════════════════════════════════
 const U = { id:null, username:'', correo:'', nip:'', primerIngreso:false };
 
-// ══ JSONP — evita bloqueo CORS en Chrome móvil con Apps Script ══
-function fetchJSONP(url){
-  return new Promise((resolve,reject)=>{
-    const cbName='_kcb'+Date.now()+Math.floor(Math.random()*9999);
-    const script=document.createElement('script');
-    const timer=setTimeout(()=>{ cleanup(); reject(new Error('timeout')); },12000);
-    function cleanup(){ clearTimeout(timer); try{delete window[cbName];}catch(e){} if(script.parentNode)script.parentNode.removeChild(script); }
-    window[cbName]=data=>{ cleanup(); resolve(data); };
-    script.onerror=()=>{ cleanup(); reject(new Error('script_error')); };
-    script.src=url+(url.includes('?')?'&':'?')+'callback='+cbName;
-    document.head.appendChild(script);
-  });
-}
-
 async function doLoginUsuario(){
-  const userId=document.getElementById('login-usuario').value.trim().padStart(2,'0');
-  const nip=document.getElementById('login-nip').value.trim();
+  const userId = document.getElementById('login-usuario').value.trim().padStart(2,'0');
+  const nip    = document.getElementById('login-nip').value.trim();
+  const errEl  = document.getElementById('login-err');
+
   if(!userId||!nip){ mostrarErrLogin('Ingresa tu número de usuario y NIP'); return; }
-  if(!S.cfg.scriptUrl){
-    const items=await dbAll('config');
-    const saved=items.find(i=>i.k==='scriptUrl')?.v;
-    if(saved) S.cfg.scriptUrl=saved;
-  }
-  if(!S.cfg.scriptUrl){ mostrarErrLogin('Sin configuración. Abre el enlace del coordinador.'); return; }
-  if(!navigator.onLine){
-    if(S.cfg.pin&&nip===S.cfg.pin){ U.id=userId;U.nip=nip;ocultarLogin();return; }
-    mostrarErrLogin('Sin conexión a internet.'); return;
-  }
-  const btn=document.getElementById('login-btn');
-  btn.disabled=true; btn.textContent='Verificando...';
-  document.getElementById('login-err').classList.remove('on');
-  const loginUrl=`${S.cfg.scriptUrl}?action=loginUsuario&user=${encodeURIComponent(userId)}&nip=${encodeURIComponent(nip)}&device=${encodeURIComponent(S.cfg.deviceId||'')}`;
+  if(!S.cfg.scriptUrl){ mostrarErrLogin('El sistema no está configurado. Contacta al administrador.'); return; }
+  if(!navigator.onLine){ mostrarErrLogin('Sin conexión. Verifica tu internet.'); return; }
+
+  document.getElementById('login-btn').disabled=true;
+  document.getElementById('login-btn').textContent='Verificando...';
+
   try{
-    // JSONP evita el bloqueo CORS/redirect de Apps Script en Chrome móvil
-    const d=await fetchJSONP(loginUrl);
-    await manejarRespuestaLogin(d,userId,nip);
-  }catch(e){
-    // Fallback: fetch normal
-    try{
-      const r=await fetch(loginUrl);
-      const d=await r.json();
-      await manejarRespuestaLogin(d,userId,nip);
-    }catch(e2){
-      if(S.cfg.pin&&nip===S.cfg.pin){
-        U.id=userId;U.nip=nip;
-        toast('Acceso local activo','warn',3000);
-        ocultarLogin();
+    const r=await fetch(`${S.cfg.scriptUrl}?action=loginUsuario&user=${encodeURIComponent(userId)}&nip=${encodeURIComponent(nip)}&device=${encodeURIComponent(S.cfg.deviceId||'')}`);
+    const d=await r.json();
+    if(d.status==='OK'){
+      U.id=userId;
+      U.username=d.usuario.username||'';
+      U.correo=d.usuario.correo||'';
+      U.nip=nip;
+      U.primerIngreso=!!d.usuario.primer_ingreso;
+      // Precargar config desde el servidor
+      if(d.config){
+        if(d.config.municipio) S.cfg.municipio=d.config.municipio;
+        if(d.config.partido)   S.cfg.partidos=d.config.partido;
+      }
+      if(U.primerIngreso){
+        mostrarPrimerIngreso();
       }else{
-        mostrarErrLogin('No se pudo conectar. Verifica tu internet.');
+        // Cargar datos del usuario en cfg
+        S.cfg.capturista=U.correo;
+        S.cfg.username=U.username;
+        if(d.config&&d.config.municipio){
+          document.getElementById('cfg-muni').value=d.config.municipio;
+          document.getElementById('hdr-muni').textContent=d.config.municipio;
+          document.getElementById('dash-muni').textContent=d.config.municipio;
+        }
+        ocultarLogin();
       }
-    }
-  }
-  btn.disabled=false;
-  btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg> Ingresar';
-}
-
-async function manejarRespuestaLogin(d,userId,nip){
-  if(d.status==='OK'){
-    U.id=userId; U.username=d.usuario?.username||''; U.correo=d.usuario?.correo||''; U.nip=nip;
-    U.primerIngreso=!!(d.usuario?.primer_ingreso);
-    if(d.config?.municipio){ S.cfg.municipio=d.config.municipio; await dbPut('config',{k:'municipio',v:d.config.municipio}); }
-    if(d.config?.partido){   S.cfg.partidos=d.config.partido;   await dbPut('config',{k:'partidos',v:d.config.partido}); }
-    if(U.primerIngreso){
-      mostrarPrimerIngreso();
+    }else if(d.status==='BLOQUEADO'){
+      mostrarErrLogin('⛔ Usuario bloqueado. Contacta al administrador.');
     }else{
-      S.cfg.capturista=U.correo; S.cfg.username=U.username;
-      if(d.config?.municipio){
-        const m=d.config.municipio;
-        document.getElementById('cfg-muni').value=m;
-        document.getElementById('hdr-muni').textContent=m;
-        document.getElementById('dash-muni').textContent=m;
-      }
-      ocultarLogin();
+      mostrarErrLogin(d.message||'Usuario o NIP incorrecto');
     }
-  }else if(d.status==='BLOQUEADO'){
-    mostrarErrLogin('⛔ Usuario bloqueado. Contacta al administrador.');
-  }else{
-    mostrarErrLogin(d.message||'Usuario o NIP incorrecto');
+  }catch(e){
+    mostrarErrLogin('Error de conexión. Intenta de nuevo.');
   }
+  document.getElementById('login-btn').disabled=false;
+  document.getElementById('login-btn').innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg> Ingresar';
 }
-
 
 function mostrarErrLogin(msg){
   const el=document.getElementById('login-err');
@@ -1821,21 +1780,8 @@ function valINE(i,cntId,erId){
   if(erId){
     const el=document.getElementById(erId);
     if(el){
-      if(!lenOk&&v.length>0){
-        el.textContent=v.length<18
-          ? `Faltan ${18-v.length} caracteres — busca la clave en el anverso de tu INE`
-          : 'Demasiados caracteres — verifica la credencial';
-      } else if(lenOk&&!fmtOk){
-        // Ayuda específica según posición incorrecta
-        if(!/^[A-Z]{6}/.test(v))
-          el.textContent='Las primeras 6 posiciones deben ser letras';
-        else if(!/^[A-Z]{6}[0-9]{8}/.test(v))
-          el.textContent='Las posiciones 7-14 deben ser números';
-        else if(!/^[A-Z]{6}[0-9]{8}[HM]/.test(v))
-          el.textContent='La posición 15 debe ser H (hombre) o M (mujer)';
-        else
-          el.textContent='Las últimas 3 posiciones deben ser letras o números';
-      }
+      if(!lenOk&&v.length>0) el.textContent='Debe tener exactamente 18 caracteres';
+      else if(lenOk&&!fmtOk) el.textContent='Formato inválido: 6 letras + 8 números + H/M + 3 alfanuméricos';
       el.classList.toggle('on',!fmtOk&&v.length>0);
     }
   }
@@ -1904,21 +1850,7 @@ function updateDash(){
 
   // Cobertura por sección (casillas)
   const secMap={};
-  // Cobertura por sección: prioriza estadoGlobal (servidor) si está disponible
-  const secMap={};
-  S.catalogo.forEach(c=>{
-    if(!secMap[c.seccion]) secMap[c.seccion]={tot:0,cov:0};
-    secMap[c.seccion].tot++;
-    // Verificar cobertura: primero en estadoGlobal (servidor), luego local sincronizado
-    const enServidor=S.estadoGlobal.some(x=>
-      String(x.seccion)===String(c.seccion)&&String(x.id_casilla)===String(c.id_casilla)
-    );
-    const enLocal=S.registros.some(x=>
-      x.tipo_reg==='casilla'&&x.synced&&
-      String(x.seccion)===String(c.seccion)&&x.id_casilla===c.id_casilla
-    );
-    if(enServidor||enLocal) secMap[c.seccion].cov++;
-  });
+  S.catalogo.forEach(c=>{if(!secMap[c.seccion])secMap[c.seccion]={tot:0,cov:0};secMap[c.seccion].tot++;if(S.registros.some(x=>x.tipo_reg==='casilla'&&x.seccion===c.seccion&&x.id_casilla===c.id_casilla))secMap[c.seccion].cov++;});
   const keys=Object.keys(secMap).sort((a,b)=>Number(a)-Number(b));
   const list=document.getElementById('cov-list');
   if(!keys.length){list.innerHTML='<div style="padding:28px;text-align:center;font-size:13px;color:var(--muted)">Descarga el catálogo para ver cobertura</div>';}
@@ -1994,48 +1926,32 @@ function updateDash(){
 // syncOne: sincroniza un registro sin bloquear la UI
 async function syncOne(reg){
   if(!S.cfg.scriptUrl||!navigator.onLine) return;
-  const actualizarEstado=async(stored,synced,err)=>{
-    stored.synced=synced; stored.sync_error=err;
-    await dbPut('registros',stored);
-    S.registros=await dbAll('registros');
-    updateDash();
-    const pend=S.registros.filter(r=>!r.synced&&!r.sync_error).length;
-    const badge=document.getElementById('sync-badge');
-    if(badge){badge.style.display=pend>0?'inline-flex':'none';badge.textContent=pend;}
-  };
-  const stored=S.registros.find(r=>r.id===reg.id)||reg;
   try{
-    // Intentar con CORS para poder leer la respuesta
-    const resp=await fetch(S.cfg.scriptUrl,{
-      method:'POST',
+    await fetch(S.cfg.scriptUrl,{
+      method:'POST',mode:'no-cors',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify(reg)
     });
-    const data=await resp.json();
-    if(data.status==='OK'){
-      await actualizarEstado(stored,true,null);
-      toast('✓ Registro guardado y sincronizado','ok');
-    } else if(data.status==='DUPLICATE'){
-      await actualizarEstado(stored,false,'DUPLICADO EN SERVIDOR: '+data.message);
-      toast('⚠ '+data.message,'err',5000);
-    } else {
-      await actualizarEstado(stored,false,data.message||'Error del servidor');
-      toast('Error: '+data.message,'err');
-    }
-  }catch(corsErr){
-    // CORS bloqueado — fallback a no-cors
-    try{
-      await fetch(S.cfg.scriptUrl,{
-        method:'POST',mode:'no-cors',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify(reg)
-      });
-      await actualizarEstado(stored,true,null);
-      toast('✓ Guardado y enviado al servidor','ok');
-    }catch(e){
-      await actualizarEstado(stored,false,'Sin conexion');
-      toast('Sin conexion — guardado localmente','');
-    }
+    // no-cors no lanza error si llega — marcamos como sincronizado
+    const stored=S.registros.find(r=>r.id===reg.id)||reg;
+    stored.synced=true; stored.sync_error=null;
+    await dbPut('registros',stored);
+    // Actualizar solo los contadores sin re-renderizar toda la lista
+    S.registros=await dbAll('registros');
+    updateDash();
+    // Actualizar badge del botón sync
+    const pend=S.registros.filter(r=>!r.synced&&!r.sync_error).length;
+    const badge=document.getElementById('sync-badge');
+    if(badge) badge.style.display=pend>0?'inline-flex':'none';
+    if(badge) badge.textContent=pend;
+    toast('✓ Registro guardado y sincronizado','ok');
+  }catch(e){
+    const stored=S.registros.find(r=>r.id===reg.id)||reg;
+    stored.sync_error='Error de red';
+    await dbPut('registros',stored);
+    S.registros=await dbAll('registros');
+    updateDash();
+    toast('✓ Guardado localmente — sin conexión','');
   }
 }
 
@@ -2274,10 +2190,8 @@ async function init(){
 
   // FIX 4 — URL precargada desde parametro (nunca visible al capturista)
   const urlParams=new URLSearchParams(window.location.search);
-  // Acepta tanto ?srv= como ?svr= (tolerancia a error tipográfico)
-  const srvParam = urlParams.get('srv') || urlParams.get('svr');
-  if(srvParam){
-    const srvUrl=decodeURIComponent(srvParam);
+  if(urlParams.get('srv')){
+    const srvUrl=decodeURIComponent(urlParams.get('srv'));
     S.cfg.scriptUrl=srvUrl;
     await dbPut('config',{k:'scriptUrl',v:srvUrl});
     document.getElementById('cfg-url').value=srvUrl;
