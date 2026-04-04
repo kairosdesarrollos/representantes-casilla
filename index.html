@@ -374,7 +374,7 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
   </div>
   <div class="login-marca">Kairos Desarrollos</div>
-  <div style="font-size:10px;color:rgba(255,255,255,.25);text-align:center;margin-top:2px">v15.1</div>
+  <div style="font-size:10px;color:rgba(255,255,255,.25);text-align:center;margin-top:2px">v16</div>
   <div class="login-sub" id="login-sistema-lbl">Sistema de Representantes de Casilla</div>
 
   <!-- Formulario de login -->
@@ -1530,86 +1530,101 @@ function procesarFoto(inp,lado){
 // ══════════════════════════════════════════
 const U = { id:null, username:'', correo:'', nip:'', primerIngreso:false };
 
-// ══ JSONP — evita bloqueo CORS en Chrome móvil con Apps Script ══
-function fetchJSONP(url){
-  return new Promise((resolve,reject)=>{
-    const cbName='_kcb'+Date.now()+Math.floor(Math.random()*9999);
-    const script=document.createElement('script');
-    const timer=setTimeout(()=>{ cleanup(); reject(new Error('timeout')); },12000);
-    function cleanup(){ clearTimeout(timer); try{delete window[cbName];}catch(e){} if(script.parentNode)script.parentNode.removeChild(script); }
-    window[cbName]=data=>{ cleanup(); resolve(data); };
-    script.onerror=()=>{ cleanup(); reject(new Error('script_error')); };
-    script.src=url+(url.includes('?')?'&':'?')+'callback='+cbName;
-    document.head.appendChild(script);
-  });
-}
-
+// ══════════════════════════════════════════
+// LOGIN LOCAL — valida usuario y NIP sin depender de fetch
+// El servidor solo se usa para sincronizar cambios en background
+// ══════════════════════════════════════════
 async function doLoginUsuario(){
-  const userId=document.getElementById('login-usuario').value.trim().padStart(2,'0');
-  const nip=document.getElementById('login-nip').value.trim();
+  const userId = document.getElementById('login-usuario').value.trim().padStart(2,'0');
+  const nip    = document.getElementById('login-nip').value.trim();
   if(!userId||!nip){ mostrarErrLogin('Ingresa tu número de usuario y NIP'); return; }
-  if(!S.cfg.scriptUrl){
-    const items=await dbAll('config');
-    const saved=items.find(i=>i.k==='scriptUrl')?.v;
-    if(saved) S.cfg.scriptUrl=saved;
-  }
-  if(!S.cfg.scriptUrl){ mostrarErrLogin('Sin configuración. Abre el enlace del coordinador.'); return; }
-  if(!navigator.onLine){
-    if(S.cfg.pin&&nip===S.cfg.pin){ U.id=userId;U.nip=nip;ocultarLogin();return; }
-    mostrarErrLogin('Sin conexión a internet.'); return;
-  }
+
   const btn=document.getElementById('login-btn');
   btn.disabled=true; btn.textContent='Verificando...';
   document.getElementById('login-err').classList.remove('on');
-  const loginUrl=`${S.cfg.scriptUrl}?action=loginUsuario&user=${encodeURIComponent(userId)}&nip=${encodeURIComponent(nip)}&device=${encodeURIComponent(S.cfg.deviceId||'')}`;
-  try{
-    // JSONP evita el bloqueo CORS/redirect de Apps Script en Chrome móvil
-    const d=await fetchJSONP(loginUrl);
-    await manejarRespuestaLogin(d,userId,nip);
-  }catch(e){
-    // Fallback: fetch normal
+
+  // Cargar config de usuarios desde IndexedDB
+  const items = await dbAll('config');
+  const usuarios = JSON.parse(items.find(i=>i.k==='usuarios_local')?.v||'{}');
+  const userKey  = 'u'+userId;
+  const userData = usuarios[userKey];
+
+  if(userData){
+    // Usuario ya configurado localmente — verificar NIP
+    if(userData.bloqueado){ mostrarErrLogin('⛔ Usuario bloqueado. Contacta al administrador.'); btn.disabled=false; btn.innerHTML=btnIcon(); return; }
+    if(nip !== userData.nip){ mostrarErrLogin('NIP incorrecto. Intenta de nuevo.'); btn.disabled=false; btn.innerHTML=btnIcon(); return; }
+    // NIP correcto — entrar
+    U.id=userId; U.username=userData.username||''; U.correo=userData.correo||''; U.nip=nip; U.primerIngreso=false;
+    S.cfg.capturista=U.correo; S.cfg.username=U.username;
+    if(userData.municipio){ S.cfg.municipio=userData.municipio; document.getElementById('cfg-muni').value=userData.municipio; document.getElementById('hdr-muni').textContent=userData.municipio; document.getElementById('dash-muni').textContent=userData.municipio; }
+    if(userData.partido){ S.cfg.partidos=userData.partido; }
+    ocultarLogin();
+    // Sincronizar con servidor en background (no bloquea)
+    sincronizarUsuarioConServidor(userId, nip);
+  } else {
+    // Usuario nuevo — verificar contra servidor si hay internet
+    if(!S.cfg.scriptUrl){ mostrarErrLogin('Sin configuración. Abre el enlace del coordinador.'); btn.disabled=false; btn.innerHTML=btnIcon(); return; }
+    if(!navigator.onLine){ mostrarErrLogin('Primera vez: necesitas conexión a internet.'); btn.disabled=false; btn.innerHTML=btnIcon(); return; }
     try{
-      const r=await fetch(loginUrl);
-      const d=await r.json();
-      await manejarRespuestaLogin(d,userId,nip);
-    }catch(e2){
-      if(S.cfg.pin&&nip===S.cfg.pin){
-        U.id=userId;U.nip=nip;
-        toast('Acceso local activo','warn',3000);
-        ocultarLogin();
-      }else{
-        mostrarErrLogin('No se pudo conectar. Verifica tu internet.');
+      const url=`${S.cfg.scriptUrl}?action=loginUsuario&user=${encodeURIComponent(userId)}&nip=${encodeURIComponent(nip)}&device=${encodeURIComponent(S.cfg.deviceId||'')}`;
+      const resp = await Promise.race([
+        fetch(url).then(r=>r.json()),
+        new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),10000))
+      ]);
+      if(resp.status==='OK'){
+        // Guardar usuario localmente para próximas veces
+        const nipInicial = nip;
+        usuarios[userKey]={
+          nip: nipInicial,
+          username: resp.usuario?.username||'',
+          correo: resp.usuario?.correo||'',
+          municipio: resp.config?.municipio||'',
+          partido: resp.config?.partido||'PAN',
+          bloqueado: false,
+          primerIngreso: !!(resp.usuario?.primer_ingreso)
+        };
+        await dbPut('config',{k:'usuarios_local',v:JSON.stringify(usuarios)});
+        U.id=userId; U.username=resp.usuario?.username||''; U.correo=resp.usuario?.correo||''; U.nip=nip;
+        U.primerIngreso=!!(resp.usuario?.primer_ingreso);
+        S.cfg.municipio=resp.config?.municipio||''; S.cfg.partidos=resp.config?.partido||'PAN';
+        S.cfg.capturista=U.correo; S.cfg.username=U.username;
+        if(resp.config?.municipio){ const m=resp.config.municipio; document.getElementById('cfg-muni').value=m; document.getElementById('hdr-muni').textContent=m; document.getElementById('dash-muni').textContent=m; }
+        if(U.primerIngreso){ mostrarPrimerIngreso(); } else { ocultarLogin(); }
+      } else if(resp.status==='BLOQUEADO'){
+        mostrarErrLogin('⛔ Usuario bloqueado. Contacta al administrador.');
+      } else {
+        mostrarErrLogin(resp.message||'Usuario o NIP incorrecto');
       }
+    }catch(e){
+      mostrarErrLogin('No se pudo verificar. Revisa tu internet e intenta de nuevo.');
     }
   }
-  btn.disabled=false;
-  btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg> Ingresar';
+  btn.disabled=false; btn.innerHTML=btnIcon();
 }
 
-async function manejarRespuestaLogin(d,userId,nip){
-  if(d.status==='OK'){
-    U.id=userId; U.username=d.usuario?.username||''; U.correo=d.usuario?.correo||''; U.nip=nip;
-    U.primerIngreso=!!(d.usuario?.primer_ingreso);
-    if(d.config?.municipio){ S.cfg.municipio=d.config.municipio; await dbPut('config',{k:'municipio',v:d.config.municipio}); }
-    if(d.config?.partido){   S.cfg.partidos=d.config.partido;   await dbPut('config',{k:'partidos',v:d.config.partido}); }
-    if(U.primerIngreso){
-      mostrarPrimerIngreso();
-    }else{
-      S.cfg.capturista=U.correo; S.cfg.username=U.username;
-      if(d.config?.municipio){
-        const m=d.config.municipio;
-        document.getElementById('cfg-muni').value=m;
-        document.getElementById('hdr-muni').textContent=m;
-        document.getElementById('dash-muni').textContent=m;
+function btnIcon(){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg> Ingresar'; }
+
+async function sincronizarUsuarioConServidor(userId, nip){
+  if(!S.cfg.scriptUrl||!navigator.onLine) return;
+  try{
+    const url=`${S.cfg.scriptUrl}?action=loginUsuario&user=${encodeURIComponent(userId)}&nip=${encodeURIComponent(nip)}&device=${encodeURIComponent(S.cfg.deviceId||'')}`;
+    const resp=await fetch(url);
+    const d=await resp.json();
+    if(d.status==='OK'){
+      // Actualizar datos locales con los del servidor
+      const items=await dbAll('config');
+      const usuarios=JSON.parse(items.find(i=>i.k==='usuarios_local')?.v||'{}');
+      const userKey='u'+String(userId).padStart(2,'0');
+      if(usuarios[userKey]){
+        if(d.usuario?.username) usuarios[userKey].username=d.usuario.username;
+        if(d.config?.municipio) usuarios[userKey].municipio=d.config.municipio;
+        await dbPut('config',{k:'usuarios_local',v:JSON.stringify(usuarios)});
       }
-      ocultarLogin();
     }
-  }else if(d.status==='BLOQUEADO'){
-    mostrarErrLogin('⛔ Usuario bloqueado. Contacta al administrador.');
-  }else{
-    mostrarErrLogin(d.message||'Usuario o NIP incorrecto');
-  }
+  }catch(e){}
 }
+
+async function manejarRespuestaLogin(d,userId,nip){ /* legacy - no usado */ }
 
 
 function mostrarErrLogin(msg){
@@ -1646,21 +1661,32 @@ async function guardarPrimerIngreso(){
   }
   if(nip1.length<4){ erGen.textContent='El NIP debe tener al menos 4 dígitos'; erGen.classList.add('on'); return; }
   if(nip1!==nip2){ document.getElementById('pi-er-nip').classList.add('on'); return; }
-
   erGen.classList.remove('on');
-  try{
-    const r=await fetch(S.cfg.scriptUrl,{
-      method:'POST', mode:'no-cors',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({tipo_msg:'primer_ingreso', user_id:U.id, nip_nuevo:nip1, correo, device_id:S.cfg.deviceId||''})
-    });
-    U.correo=correo; U.nip=nip1; U.primerIngreso=false;
-    S.cfg.capturista=correo; S.cfg.username=U.username;
-    await dbPut('config',{k:'capturista',v:correo});
-    toast('✓ Acceso configurado correctamente','ok');
-    ocultarLogin();
-  }catch(e){
-    erGen.textContent='Error al guardar. Verifica tu conexión.'; erGen.classList.add('on');
+
+  // Guardar localmente PRIMERO — siempre funciona
+  const items=await dbAll('config');
+  const usuarios=JSON.parse(items.find(i=>i.k==='usuarios_local')?.v||'{}');
+  const userKey='u'+String(U.id).padStart(2,'0');
+  usuarios[userKey]={
+    ...( usuarios[userKey]||{} ),
+    nip:nip1, correo, primerIngreso:false, bloqueado:false
+  };
+  await dbPut('config',{k:'usuarios_local',v:JSON.stringify(usuarios)});
+  U.correo=correo; U.nip=nip1; U.primerIngreso=false;
+  S.cfg.capturista=correo; S.cfg.username=U.username;
+  await dbPut('config',{k:'capturista',v:correo});
+  toast('✓ Acceso configurado correctamente','ok');
+  ocultarLogin();
+
+  // Sincronizar con servidor en background
+  if(S.cfg.scriptUrl && navigator.onLine){
+    try{
+      await fetch(S.cfg.scriptUrl,{
+        method:'POST', mode:'no-cors',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({tipo_msg:'primer_ingreso', user_id:U.id, nip_nuevo:nip1, correo, device_id:S.cfg.deviceId||''})
+      });
+    }catch(e){}
   }
 }
 
@@ -1671,18 +1697,28 @@ async function cambiarNIP(){
   if(n1.length<4){ erEl.textContent='Mínimo 4 dígitos'; erEl.classList.add('on'); return; }
   if(n1!==n2){ erEl.textContent='Los NIP no coinciden'; erEl.classList.add('on'); return; }
   erEl.classList.remove('on');
-  if(!navigator.onLine){ toast('Sin conexión','err'); return; }
-  try{
-    await fetch(S.cfg.scriptUrl,{
-      method:'POST', mode:'no-cors',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({tipo_msg:'cambiar_nip', user_id:U.id, nip_nuevo:n1, device_id:S.cfg.deviceId||''})
-    });
-    U.nip=n1;
-    document.getElementById('cfg-nip-nuevo').value='';
-    document.getElementById('cfg-nip-conf').value='';
-    toast('✓ NIP actualizado correctamente','ok');
-  }catch(e){ toast('Error al actualizar NIP','err'); }
+
+  // Guardar localmente
+  const items=await dbAll('config');
+  const usuarios=JSON.parse(items.find(i=>i.k==='usuarios_local')?.v||'{}');
+  const userKey='u'+String(U.id).padStart(2,'0');
+  if(usuarios[userKey]) usuarios[userKey].nip=n1;
+  await dbPut('config',{k:'usuarios_local',v:JSON.stringify(usuarios)});
+  U.nip=n1;
+  document.getElementById('cfg-nip-nuevo').value='';
+  document.getElementById('cfg-nip-conf').value='';
+  toast('✓ NIP actualizado correctamente','ok');
+
+  // Sincronizar con servidor en background
+  if(S.cfg.scriptUrl && navigator.onLine){
+    try{
+      await fetch(S.cfg.scriptUrl,{
+        method:'POST', mode:'no-cors',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({tipo_msg:'cambiar_nip', user_id:U.id, nip_nuevo:n1, device_id:S.cfg.deviceId||''})
+      });
+    }catch(e){}
+  }
 }
 
 // ══════════════════════════════════════════
