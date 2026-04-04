@@ -8,6 +8,17 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Representantes">
 <title>Captura · Representantes de Casilla</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<script>
+// Matar cualquier Service Worker registrado — fuerza recarga limpia
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.getRegistrations().then(regs=>{
+    regs.forEach(r=>r.unregister());
+  });
+}
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -301,24 +312,41 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
 .ov-card{background:var(--surface);border-radius:var(--r);padding:24px 32px;text-align:center}
 .spinner{width:38px;height:38px;border:3px solid var(--border);border-top-color:var(--navy);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px}
 
-/* LOGIN CON PIN — Fix 10,11 */
-#login-screen{position:fixed;inset:0;background:var(--navy);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px}
-#login-screen.hidden{display:none}
-.pin-logo{width:56px;height:56px;background:var(--red);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px}
-.pin-logo svg{width:28px;height:28px;color:#fff}
-.pin-titulo{font-family:var(--fh);font-size:26px;font-weight:700;color:#fff;text-align:center;margin-bottom:4px}
-.pin-sub{font-size:13px;color:rgba(255,255,255,.45);text-align:center;margin-bottom:28px}
-.pin-inp{width:100%;max-width:280px;background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.2);border-radius:var(--rs);padding:14px;font-size:24px;color:#fff;text-align:center;letter-spacing:8px;font-family:var(--fm);outline:none;transition:border .15s}
-.pin-inp:focus{border-color:rgba(255,255,255,.5)}
-.pin-btn{width:100%;max-width:280px;background:var(--red);color:#fff;border:none;border-radius:var(--rs);padding:14px;font-family:var(--fh);font-size:18px;font-weight:600;letter-spacing:.5px;cursor:pointer;margin-top:14px;transition:background .15s}
-.pin-btn:active{background:#a50d22}
-.pin-error{color:var(--red-bg);font-size:13px;font-weight:600;margin-top:10px;text-align:center;display:none}
-.pin-muni{font-size:12px;color:rgba(255,255,255,.3);text-align:center;margin-top:20px}
+/* SISTEMA DE USUARIOS v12 */
+#login-screen{position:fixed;inset:0;background:var(--navy);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;overflow-y:auto}
+.login-logo{width:56px;height:56px;background:var(--red);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;flex-shrink:0}
+.login-logo svg{width:28px;height:28px;color:#fff}
+.login-marca{font-family:var(--fh);font-size:22px;font-weight:700;color:#fff;text-align:center;letter-spacing:.5px;margin-bottom:2px}
+.login-sub{font-size:12px;color:rgba(255,255,255,.4);text-align:center;margin-bottom:24px}
+.login-card{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:var(--r);padding:22px;width:100%;max-width:320px}
+.login-fld{margin-bottom:14px}
+.login-lbl{display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.login-inp{width:100%;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.2);border-radius:var(--rs);padding:12px 14px;font-size:16px;color:#fff;font-family:var(--fm);outline:none;transition:border .15s;letter-spacing:2px}
+.login-inp.user-inp{letter-spacing:0;font-family:var(--fb);font-size:15px}
+.login-inp:focus{border-color:rgba(255,255,255,.55);background:rgba(255,255,255,.15)}
+.login-btn-main{width:100%;background:var(--red);color:#fff;border:none;border-radius:var(--rs);padding:14px;font-family:var(--fh);font-size:18px;font-weight:600;letter-spacing:.5px;cursor:pointer;margin-top:6px;transition:background .15s;display:flex;align-items:center;justify-content:center;gap:8px}
+.login-btn-main:active{background:#a50d22}
+.login-btn-main:disabled{opacity:.4;cursor:not-allowed}
+.login-btn-main svg{width:18px;height:18px}
+.login-err-box{background:rgba(200,16,46,.25);border:1px solid rgba(200,16,46,.5);border-radius:var(--rs);padding:10px 14px;font-size:12px;color:#ffb3b3;font-weight:600;margin-top:12px;display:none;text-align:center}
+.login-err-box.on{display:block}
+.login-footer{font-size:11px;color:rgba(255,255,255,.2);text-align:center;margin-top:16px;max-width:320px}
+/* Pantalla de primer ingreso */
+.primer-ingreso-card{background:var(--surface);border-radius:var(--r);padding:22px;width:100%;max-width:340px;max-height:90vh;overflow-y:auto}
+.primer-ingreso-card h2{font-family:var(--fh);font-size:20px;color:var(--navy);margin-bottom:4px}
+.primer-ingreso-card p{font-size:12px;color:var(--muted);margin-bottom:16px}
+.pi-badge{display:inline-block;background:var(--navy);color:#fff;border-radius:6px;padding:3px 12px;font-family:var(--fh);font-size:14px;font-weight:700;margin-bottom:14px}
 #app-screen{display:flex;flex-direction:column;height:100%;overflow:hidden}
 .consulta-wrap{padding:16px 16px 80px}
 .consulta-hdr{background:var(--navy);border-radius:var(--r);padding:16px;margin-bottom:16px;color:#fff}
 .consulta-hdr h2{font-family:var(--fh);font-size:20px;font-weight:700;margin-bottom:3px}
 .consulta-hdr p{font-size:12px;color:rgba(255,255,255,.55)}
+/* Fix 1 — Casilla seleccionada en CONSULTA con alto contraste */
+#q-cas-grid .cas-chip{background:var(--surface);border:1.5px solid var(--border);transition:all .15s}
+#q-cas-grid .cas-chip:hover{border-color:var(--navy);background:#eef2ff}
+#q-cas-grid .cas-chip.sel{background:var(--navy)!important;border:2.5px solid var(--red)!important;color:#fff!important;box-shadow:0 3px 10px rgba(26,39,68,.4);transform:scale(1.05)}
+#q-cas-grid .cas-chip.sel .cid{color:#fff!important;font-size:19px}
+#q-cas-grid .cas-chip.sel .ctp{color:rgba(255,255,255,.75)!important}
 .consulta-result{margin-top:16px}
 .result-card{background:var(--surface);border-radius:var(--r);overflow:hidden;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
 .result-hdr{padding:12px 16px;display:flex;align-items:center;gap:10px}
@@ -350,15 +378,57 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
 </head>
 <body>
 <div id="login-screen">
-  <div class="pin-logo">
+  <div class="login-logo">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
   </div>
-  <div class="pin-titulo">Acceso al sistema</div>
-  <div class="pin-sub" id="pin-muni-lbl">Representantes de Casilla</div>
-  <input type="password" id="login-pin" class="pin-inp" placeholder="••••" maxlength="8" inputmode="numeric" autocomplete="off" onkeydown="if(event.key==='Enter')verificarPin()">
-  <button class="pin-btn" onclick="verificarPin()">Ingresar</button>
-  <div class="pin-error" id="login-error">PIN incorrecto. Intenta de nuevo.</div>
-  <div class="pin-muni" id="login-device-id"></div>
+  <div class="login-marca">Kairos Desarrollos</div>
+  <div class="login-sub" id="login-sistema-lbl">Sistema de Representantes de Casilla</div>
+
+  <!-- Formulario de login -->
+  <div class="login-card" id="login-form-card">
+    <div class="login-fld">
+      <label class="login-lbl">Número de usuario</label>
+      <input type="text" id="login-usuario" class="login-inp user-inp" placeholder="Ej. 01" maxlength="4" inputmode="numeric" autocomplete="off" oninput="this.value=this.value.replace(/\D/g,'')" onkeydown="if(event.key==='Enter')document.getElementById('login-nip').focus()">
+    </div>
+    <div class="login-fld">
+      <label class="login-lbl">NIP</label>
+      <input type="password" id="login-nip" class="login-inp" placeholder="••••••" maxlength="8" inputmode="numeric" autocomplete="off" onkeydown="if(event.key==='Enter')doLoginUsuario()">
+    </div>
+    <button class="login-btn-main" id="login-btn" onclick="doLoginUsuario()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+      Ingresar
+    </button>
+    <div class="login-err-box" id="login-err"></div>
+  </div>
+
+  <!-- Pantalla de primer ingreso (cambio de NIP + correo) -->
+  <div class="primer-ingreso-card" id="primer-ingreso-card" style="display:none">
+    <div class="pi-badge" id="pi-usuario-badge">Usuario 01</div>
+    <h2>Configura tu acceso</h2>
+    <p>Es tu primer ingreso. Define tu NIP personal y proporciona tu correo.</p>
+    <div class="fld">
+      <label>Correo electrónico</label>
+      <input type="email" id="pi-correo" class="fld-inp" placeholder="tucorreo@correo.com" inputmode="email" autocomplete="email" oninput="valEmailPI(this)" style="width:100%">
+      <div class="hint">El administrador lo vinculará a tu cuenta</div>
+      <div class="errmsg" id="pi-er-correo">Ingresa un correo válido</div>
+    </div>
+    <div class="fld">
+      <label>Nuevo NIP <span style="font-weight:400;color:var(--muted)">(4-8 dígitos)</span></label>
+      <input type="password" id="pi-nip1" placeholder="••••••" maxlength="8" inputmode="numeric" autocomplete="new-password" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--rs);font-size:16px;font-family:var(--fm);letter-spacing:4px;outline:none" onkeydown="if(event.key==='Enter')document.getElementById('pi-nip2').focus()">
+    </div>
+    <div class="fld">
+      <label>Confirmar NIP</label>
+      <input type="password" id="pi-nip2" placeholder="••••••" maxlength="8" inputmode="numeric" autocomplete="new-password" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--rs);font-size:16px;font-family:var(--fm);letter-spacing:4px;outline:none" onkeydown="if(event.key==='Enter')guardarPrimerIngreso()">
+      <div class="errmsg" id="pi-er-nip">Los NIP no coinciden</div>
+    </div>
+    <button class="btn btn-primary" onclick="guardarPrimerIngreso()" style="width:100%;margin-top:4px">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px;height:16px"><polyline points="20 6 9 17 4 12"/></svg>
+      Confirmar y entrar
+    </button>
+    <div class="errmsg" id="pi-er-gen" style="margin-top:8px"></div>
+  </div>
+
+  <div class="login-footer" id="login-footer-txt">Kairos Desarrollos · Sistema Electoral Puebla 2027</div>
 </div>
 
 <div id="app-screen">
@@ -517,7 +587,7 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
       <!-- BANNER ESTADO GLOBAL -->
       <div class="estado-bar" id="estado-bar">
         <div class="dot dot-no" id="estado-dot"></div>
-        <span id="estado-txt">Sin estado de Sheets</span>
+        <span id="estado-txt">Sin estado del servidor</span>
         <button onclick="descargarEstado()" id="estado-btn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
           Actualizar estado
@@ -529,8 +599,8 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
         <div class="leyenda">
           <div class="ley-item"><div class="ley-box lb-libre"></div>Libre</div>
           <div class="ley-item"><div class="ley-box lb-local"></div>Capturado local</div>
-          <div class="ley-item"><div class="ley-box lb-parcial"></div>Parcial (Sheets)</div>
-          <div class="ley-item"><div class="ley-box lb-llena"></div>Completa (Sheets)</div>
+          <div class="ley-item"><div class="ley-box lb-parcial"></div>Parcial (servidor)</div>
+          <div class="ley-item"><div class="ley-box lb-llena"></div>Completa (servidor)</div>
         </div>
         <div class="cas-grid" id="c-cas-grid"></div>
       </div>
@@ -561,13 +631,13 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
             <div class="rol-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
             <h4>Propietario</h4>
             <p>Representante titular</p>
-            <div class="rol-bloq-lbl" id="bloq-prop" style="display:none">Ya asignado en Sheets</div>
+            <div class="rol-bloq-lbl" id="bloq-prop" style="display:none">Ya asignado en servidor</div>
           </div>
           <div class="rol-card" id="rol-sup" onclick="selRolSiDisponible('SUPLENTE',this)">
             <div class="rol-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
             <h4>Suplente</h4>
             <p>Representante alterno</p>
-            <div class="rol-bloq-lbl" id="bloq-sup" style="display:none">Ya asignado en Sheets</div>
+            <div class="rol-bloq-lbl" id="bloq-sup" style="display:none">Ya asignado en servidor</div>
           </div>
         </div>
         <div class="errmsg" id="er-rol">Selecciona un rol</div>
@@ -590,9 +660,11 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
       <div class="fld"><label>Apellido Materno <span style="font-weight:400;color:var(--light)">(opcional)</span></label>
         <input type="text" id="c-mat" autocapitalize="characters">
       </div>
-      <div class="fld"><label>Clave Elector INE <span style="font-weight:400;color:var(--light)">18 caracteres</span></label>
-        <input type="text" id="c-ine" placeholder="ABCD123456EFGH7801" oninput="valINE(this,'ine-cnt','er-cine')" maxlength="18" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" style="font-family:var(--fm);letter-spacing:.5px;text-transform:uppercase">
+      <div class="fld"><label>Clave de Elector (INE)</label>
+        <input type="text" id="c-ine" placeholder="Ej: GOML850312HDFRRN09" oninput="valINE(this,'ine-cnt','er-cine')" maxlength="18" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" style="font-family:var(--fm);letter-spacing:.5px;text-transform:uppercase">
         <div class="cnt" id="ine-cnt">0 / 18</div>
+        <div class="hint">Anverso de la credencial INE · 18 caracteres en total</div>
+        <div class="errmsg" id="er-cine">Formato incorrecto — revisa la credencial INE</div>        <div class="cnt" id="ine-cnt">0 / 18</div>
         <div class="errmsg" id="er-cine">Debe tener exactamente 18 caracteres</div>
       </div>
       <div class="fld"><label>Teléfono <span style="font-weight:400;color:var(--light)">10 dígitos</span></label>
@@ -733,10 +805,11 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
       <div class="fld"><label>Apellido Materno <span style="font-weight:400;color:var(--light)">(opcional)</span></label>
         <input type="text" id="g-mat" autocapitalize="characters">
       </div>
-      <div class="fld"><label>Clave Elector INE <span style="font-weight:400;color:var(--light)">18 caracteres</span></label>
-        <input type="text" id="g-ine" placeholder="ABCD123456EFGH7801" oninput="valINE(this,'g-ine-cnt','er-gine')" maxlength="18" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" style="font-family:var(--fm);letter-spacing:.5px;text-transform:uppercase">
+      <div class="fld"><label>Clave de Elector (INE)</label>
+        <input type="text" id="g-ine" placeholder="Ej: GOML850312HDFRRN09" oninput="valINE(this,'g-ine-cnt','er-gine')" maxlength="18" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" style="font-family:var(--fm);letter-spacing:.5px;text-transform:uppercase">
         <div class="cnt" id="g-ine-cnt">0 / 18</div>
-        <div class="errmsg" id="er-gine">Debe tener exactamente 18 caracteres</div>
+        <div class="hint">Anverso de la credencial INE · 18 caracteres en total</div>
+        <div class="errmsg" id="er-gine">Formato incorrecto — revisa la credencial INE</div>
       </div>
       <div class="fld"><label>Teléfono <span style="font-weight:400;color:var(--light)">10 dígitos</span></label>
         <input type="tel" id="g-tel" placeholder="5512345678" oninput="valTel(this,'g-tel-fmt','er-gtel')" maxlength="10" inputmode="numeric">
@@ -794,42 +867,50 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
 <div class="screen" id="screen-config">
   <div class="cfg-s">
     <div class="cfg-card">
-      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>Municipio</h3>
-      <div class="fld"><label>Municipio</label><input type="text" id="cfg-muni" placeholder="Ej. San Andrés Cholula" oninput="saveCfg()"></div>
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>Datos del capturista</h3>
       <div class="fld">
-        <label>Correo del capturista</label>
+        <label>Municipio</label>
+        <input type="text" id="cfg-muni" placeholder="Ej. San Andres Cholula" oninput="saveCfg()">
+      </div>
+      <div class="fld">
+        <label>Correo electrónico</label>
         <input type="email" id="cfg-cap" placeholder="capturista@correo.com" oninput="valEmail(this);saveCfg()" autocomplete="email" inputmode="email">
-        <div class="hint">Identifica quién realizó cada captura</div>
-        <div class="errmsg" id="er-cap">Ingresa un correo electrónico válido</div>
+        <div class="hint">Vinculado a tu número de usuario</div>
+        <div class="errmsg" id="er-cap">Ingresa un correo válido</div>
       </div>
     </div>
     <div class="cfg-card">
-      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Sincronización</h3>
-      <div class="fld"><label>URL del servidor central</label><input type="url" id="cfg-url" placeholder="https://script.google.com/macros/s/…/exec" oninput="saveCfg()">
-        <div class="hint">Proporcionada por el administrador del sistema</div>
-      </div>
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Conexión al servidor</h3>
+      <!-- URL oculta — Fix 4 -->
+      <input type="url" id="cfg-url" oninput="saveCfg()" style="display:none" autocomplete="off">
       <div class="btn-row">
-        <button class="btn btn-secondary" onclick="testConn()" style="margin-top:6px">
+        <button class="btn btn-secondary" id="btn-probar" onclick="testConn()" style="margin-top:6px">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Probar conexión
         </button>
         <button class="btn btn-primary" onclick="descargarCatalogo()" style="margin-top:6px">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Actualizar catálogo
         </button>
       </div>
+      <div id="conn-status" style="font-size:11px;margin-top:8px;color:var(--muted)"></div>
     </div>
     <div class="cfg-card">
-      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>Catálogo de Casillas</h3>
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>Catálogo de casillas</h3>
       <div id="cat-status-wrap"></div>
     </div>
     <div class="cfg-card">
-      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Acceso y seguridad</h3>
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Seguridad de sesión</h3>
       <div class="fld">
-        <label>PIN de acceso <span style="font-weight:400;color:var(--light)">(4-8 dígitos)</span></label>
-        <input type="password" id="cfg-pin" placeholder="••••" maxlength="8" inputmode="numeric" oninput="saveCfg()" style="letter-spacing:4px;font-family:var(--fm)">
-        <div class="hint">Los usuarios necesitan este PIN para abrir la app</div>
+        <label>Cambiar NIP personal</label>
+        <input type="password" id="cfg-nip-nuevo" placeholder="Nuevo NIP (4-8 dígitos)" maxlength="8" inputmode="numeric" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--rs);font-size:15px;font-family:var(--fm);letter-spacing:4px;outline:none;margin-bottom:8px">
+        <input type="password" id="cfg-nip-conf" placeholder="Confirmar NIP" maxlength="8" inputmode="numeric" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--rs);font-size:15px;font-family:var(--fm);letter-spacing:4px;outline:none">
+        <button class="btn btn-secondary" onclick="cambiarNIP()" style="margin-top:8px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Actualizar NIP
+        </button>
+        <div class="errmsg" id="er-nip" style="margin-top:6px">Los NIP no coinciden</div>
       </div>
       <div class="fld">
-        <label>Inactividad — cerrar sesión después de</label>
+        <label>Cerrar sesión por inactividad</label>
         <select id="cfg-inact" onchange="saveCfg()">
           <option value="15">15 minutos</option>
           <option value="30" selected>30 minutos</option>
@@ -838,17 +919,13 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
           <option value="0">Nunca</option>
         </select>
       </div>
-      <div style="font-size:11px;color:var(--muted);padding:4px 0">
-        ID del dispositivo: <span id="cfg-device-id" style="font-family:var(--fm);font-size:10px;color:var(--light)">—</span>
-      </div>
     </div>
       <div class="fld"><label>Separados por coma</label><textarea id="cfg-par" style="min-height:55px" oninput="saveCfg()"></textarea></div>
     </div>
     <div class="cfg-card" style="border-left:3px solid var(--red)">
       <h3 style="color:var(--red)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Datos locales</h3>
       <div class="btn-row">
-        <button class="btn btn-secondary" onclick="exportJSON()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Exportar JSON</button>
-        <button class="btn btn-danger" onclick="clearAll()">Borrar todo</button>
+        <button class="btn btn-danger" onclick="clearAll()">Borrar datos locales</button>
       </div>
       <div style="margin-top:8px">
         <button class="btn btn-secondary" onclick="recuperarDeSheets()" style="border-color:var(--green);color:var(--green)">
@@ -856,7 +933,7 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
           Recuperar registros del servidor
         </button>
       </div>
-      <div style="font-size:11px;color:var(--muted);margin-top:6px">Restaura los datos si se borraron por error — descarga desde el servidor central</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px">Restaura los datos si se borraron por error</div>
     </div>
     <div style="height:20px"></div>
   </div>
@@ -867,7 +944,7 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
   <div class="consulta-wrap">
     <div class="consulta-hdr">
       <h2>Consulta de Casilla</h2>
-      <p>Busca quién está asignado a cualquier casilla en Sheets</p>
+      <p>Busca quien esta asignado a cualquier casilla en el servidor</p>
     </div>
 
     <div class="fld">
@@ -886,7 +963,7 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
 
     <button class="btn btn-primary" id="q-btn-consultar" onclick="consultarCasilla()" disabled style="margin-top:4px">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-      Consultar en Sheets
+      Consultar en servidor
     </button>
 
     <div class="consulta-result" id="q-result"></div>
@@ -912,7 +989,12 @@ const S={
   catalogo:[], registros:[], filtro:'all',
   // estado global desde Sheets
   estadoGlobal:[], generalesGlobal:[], estadoTs:null,
-  cfg:{municipio:'',capturista:'',scriptUrl:'',partidos:'MORENA'}
+  // URL precargada — siempre disponible aunque no haya parámetro en la URL
+  cfg:{
+    municipio:'',capturista:'',username:'',
+    scriptUrl:'https://script.google.com/macros/s/AKfycbwo9E1TflmsiA7HfRzM40xBCceKI7GPUHLUWujOgiTdbtNNXuPwR4ZUNMfzhrwYYBz-/exec',
+    partidos:'PAN',pin:'',inact:'30',deviceId:''
+  }
 };
 
 // ══════════════════════════════════════════
@@ -943,35 +1025,22 @@ function dbClear(s){return new Promise((res,rej)=>{const r=tx(s,'readwrite').cle
 async function loadCfg(){
   const items=await dbAll('config');
   items.forEach(i=>S.cfg[i.k]=i.v);
-  document.getElementById('cfg-muni').value=S.cfg.municipio||'';
-  document.getElementById('cfg-cap').value=S.cfg.capturista||'';
-  document.getElementById('cfg-url').value=S.cfg.scriptUrl||'';
-  document.getElementById('cfg-par').value=S.cfg.partidos||'MORENA';
-  if(document.getElementById('cfg-pin')) document.getElementById('cfg-pin').value=S.cfg.pin||'';
+  if(document.getElementById('cfg-muni')) document.getElementById('cfg-muni').value=S.cfg.municipio||'';
+  if(document.getElementById('cfg-cap'))  document.getElementById('cfg-cap').value=S.cfg.capturista||'';
+  if(document.getElementById('cfg-url'))  document.getElementById('cfg-url').value=S.cfg.scriptUrl||'';
+  if(document.getElementById('cfg-par'))  document.getElementById('cfg-par').value=S.cfg.partidos||'PAN';
   if(document.getElementById('cfg-inact')) document.getElementById('cfg-inact').value=S.cfg.inact||'30';
-  // Mostrar deviceId
-  const did=await getDeviceId();
-  S.cfg.deviceId=did;
-  const elDid=document.getElementById('cfg-device-id');
-  if(elDid) elDid.textContent=did;
-  const elLdid=document.getElementById('login-device-id');
-  if(elLdid) elLdid.textContent=`Dispositivo: ${did}`;
   refreshHdr();
 }
 async function saveCfg(){
-  S.cfg.municipio=document.getElementById('cfg-muni').value.trim();
-  S.cfg.capturista=document.getElementById('cfg-cap').value.trim();
-  S.cfg.scriptUrl=document.getElementById('cfg-url').value.trim();
-  S.cfg.partidos=document.getElementById('cfg-par').value.trim();
-  const pinEl=document.getElementById('cfg-pin');
-  if(pinEl&&pinEl.value.trim()) S.cfg.pin=pinEl.value.trim();
+  S.cfg.municipio=document.getElementById('cfg-muni')?.value.trim()||S.cfg.municipio||'';
+  S.cfg.capturista=document.getElementById('cfg-cap')?.value.trim()||S.cfg.capturista||'';
+  S.cfg.scriptUrl=document.getElementById('cfg-url')?.value.trim()||S.cfg.scriptUrl||'';
+  S.cfg.partidos=document.getElementById('cfg-par')?.value.trim()||S.cfg.partidos||'PAN';
   const inactEl=document.getElementById('cfg-inact');
   if(inactEl) S.cfg.inact=inactEl.value;
   for(const[k,v]of Object.entries(S.cfg)) await dbPut('config',{k,v});
   refreshHdr();
-  // Actualizar label del municipio en pantalla de login
-  const pm=document.getElementById('pin-muni-lbl');
-  if(pm&&S.cfg.municipio) pm.textContent=S.cfg.municipio;
 }
 function refreshHdr(){
   const m=S.cfg.municipio||'Sin configurar';
@@ -1088,12 +1157,14 @@ async function guardarCasilla(){
   if(S.registros.some(r=>r.tipo_reg==='casilla'&&String(r.seccion)===String(S.cSeccion.seccion)&&r.id_casilla===S.cCasilla.id_casilla&&r.rol===S.cRol&&r.partido===S.cPartido)){
     toast('⚠ Ya existe ese rol/partido en esta casilla','err');return;
   }
-  const reg={tipo_reg:'casilla',seccion:S.cSeccion.seccion,id_casilla:S.cCasilla.id_casilla,tipo_casilla:S.cCasilla.tipo_casilla,nombre:`${nom} ${pat} ${mat}`.trim(),nombre_p:nom,ap_pat:pat,ap_mat:mat,ine,telefono:telF,rol:S.cRol,partido:S.cPartido,notas:not,foto_frente:S.fotoFrente||null,foto_reverso:S.fotoReverso||null,capturado_por:S.cfg.capturista||'Anonimo',device_id:S.cfg.deviceId||'',timestamp:new Date().toISOString(),synced:false,sync_error:null};
+  const reg={tipo_reg:'casilla',seccion:S.cSeccion.seccion,id_casilla:S.cCasilla.id_casilla,tipo_casilla:S.cCasilla.tipo_casilla,nombre:`${nom} ${pat} ${mat}`.trim(),nombre_p:nom,ap_pat:pat,ap_mat:mat,ine,telefono:telF,rol:S.cRol,partido:S.cPartido,notas:not,foto_frente:S.fotoFrente||null,foto_reverso:S.fotoReverso||null,capturado_por:S.cfg.capturista||'',username:S.cfg.username||'',device_id:S.cfg.deviceId||'',timestamp:new Date().toISOString(),synced:false,sync_error:null};
   const id=await dbPut('registros',reg);
   reg.id=id;
-  await loadReg();
-  toast('✓ Registro guardado','ok');
+  // Navegar inmediatamente — el usuario ve la confirmación sin delay
+  toast('✓ Guardado — sincronizando...','ok');
   resetCasilla();volverTipo();showScreen('registros');
+  // Cargar y sincronizar en segundo plano
+  await loadReg();
   syncOne({...reg, id});
 }
 function resetCasilla(){
@@ -1197,15 +1268,16 @@ async function guardarGeneral(){
     tipo_reg:'general', secciones:S.gSecciones,
     nombre:`${nom} ${pat} ${mat}`.trim(), nombre_p:nom, ap_pat:pat, ap_mat:mat,
     ine, telefono:telF, partido:S.gPartido, notas:not,
-    capturado_por:S.cfg.capturista||'Anonimo',
+    capturado_por:S.cfg.capturista||'',
+    username:S.cfg.username||'',
     device_id:S.cfg.deviceId||'',
     timestamp:new Date().toISOString(), synced:false, sync_error:null
   };
   const id=await dbPut('registros',reg);
   reg.id=id;
-  await loadReg();
-  toast('✓ General guardado','ok');
+  toast('✓ Guardado — sincronizando...','ok');
   resetGeneral();volverTipo();showScreen('registros');
+  await loadReg();
   syncOne({...reg, id});
 }
 function resetGeneral(){
@@ -1311,7 +1383,7 @@ function actualizarBannerEstado(){
   if(!dot||!txt) return;
   if(!S.estadoTs){
     dot.className='dot dot-no';
-    txt.textContent='Sin estado de Sheets — toca Actualizar';
+    txt.textContent='Sin estado del servidor — toca Actualizar';
   }else{
     const mins=Math.round((new Date()-S.estadoTs)/60000);
     dot.className='dot dot-ok';
@@ -1461,6 +1533,166 @@ function procesarFoto(inp,lado){
 }
 
 // ══════════════════════════════════════════
+// SISTEMA DE USUARIOS v12
+// ══════════════════════════════════════════
+const U = { id:null, username:'', correo:'', nip:'', primerIngreso:false };
+
+// ══ JSONP — evita bloqueo CORS en Chrome móvil con Apps Script ══
+function fetchJSONP(url){
+  return new Promise((resolve,reject)=>{
+    const cbName='_kcb'+Date.now()+Math.floor(Math.random()*9999);
+    const script=document.createElement('script');
+    const timer=setTimeout(()=>{ cleanup(); reject(new Error('timeout')); },12000);
+    function cleanup(){ clearTimeout(timer); try{delete window[cbName];}catch(e){} if(script.parentNode)script.parentNode.removeChild(script); }
+    window[cbName]=data=>{ cleanup(); resolve(data); };
+    script.onerror=()=>{ cleanup(); reject(new Error('script_error')); };
+    script.src=url+(url.includes('?')?'&':'?')+'callback='+cbName;
+    document.head.appendChild(script);
+  });
+}
+
+async function doLoginUsuario(){
+  const userId=document.getElementById('login-usuario').value.trim().padStart(2,'0');
+  const nip=document.getElementById('login-nip').value.trim();
+  if(!userId||!nip){ mostrarErrLogin('Ingresa tu número de usuario y NIP'); return; }
+  if(!S.cfg.scriptUrl){
+    const items=await dbAll('config');
+    const saved=items.find(i=>i.k==='scriptUrl')?.v;
+    if(saved) S.cfg.scriptUrl=saved;
+  }
+  if(!S.cfg.scriptUrl){ mostrarErrLogin('Sin configuración. Abre el enlace del coordinador.'); return; }
+  if(!navigator.onLine){
+    if(S.cfg.pin&&nip===S.cfg.pin){ U.id=userId;U.nip=nip;ocultarLogin();return; }
+    mostrarErrLogin('Sin conexión a internet.'); return;
+  }
+  const btn=document.getElementById('login-btn');
+  btn.disabled=true; btn.textContent='Verificando...';
+  document.getElementById('login-err').classList.remove('on');
+  const loginUrl=`${S.cfg.scriptUrl}?action=loginUsuario&user=${encodeURIComponent(userId)}&nip=${encodeURIComponent(nip)}&device=${encodeURIComponent(S.cfg.deviceId||'')}`;
+  try{
+    // JSONP evita el bloqueo CORS/redirect de Apps Script en Chrome móvil
+    const d=await fetchJSONP(loginUrl);
+    await manejarRespuestaLogin(d,userId,nip);
+  }catch(e){
+    // Fallback: fetch normal
+    try{
+      const r=await fetch(loginUrl);
+      const d=await r.json();
+      await manejarRespuestaLogin(d,userId,nip);
+    }catch(e2){
+      if(S.cfg.pin&&nip===S.cfg.pin){
+        U.id=userId;U.nip=nip;
+        toast('Acceso local activo','warn',3000);
+        ocultarLogin();
+      }else{
+        mostrarErrLogin('No se pudo conectar. Verifica tu internet.');
+      }
+    }
+  }
+  btn.disabled=false;
+  btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg> Ingresar';
+}
+
+async function manejarRespuestaLogin(d,userId,nip){
+  if(d.status==='OK'){
+    U.id=userId; U.username=d.usuario?.username||''; U.correo=d.usuario?.correo||''; U.nip=nip;
+    U.primerIngreso=!!(d.usuario?.primer_ingreso);
+    if(d.config?.municipio){ S.cfg.municipio=d.config.municipio; await dbPut('config',{k:'municipio',v:d.config.municipio}); }
+    if(d.config?.partido){   S.cfg.partidos=d.config.partido;   await dbPut('config',{k:'partidos',v:d.config.partido}); }
+    if(U.primerIngreso){
+      mostrarPrimerIngreso();
+    }else{
+      S.cfg.capturista=U.correo; S.cfg.username=U.username;
+      if(d.config?.municipio){
+        const m=d.config.municipio;
+        document.getElementById('cfg-muni').value=m;
+        document.getElementById('hdr-muni').textContent=m;
+        document.getElementById('dash-muni').textContent=m;
+      }
+      ocultarLogin();
+    }
+  }else if(d.status==='BLOQUEADO'){
+    mostrarErrLogin('⛔ Usuario bloqueado. Contacta al administrador.');
+  }else{
+    mostrarErrLogin(d.message||'Usuario o NIP incorrecto');
+  }
+}
+
+
+function mostrarErrLogin(msg){
+  const el=document.getElementById('login-err');
+  el.textContent=msg; el.classList.add('on');
+}
+
+function mostrarPrimerIngreso(){
+  document.getElementById('login-form-card').style.display='none';
+  document.getElementById('primer-ingreso-card').style.display='block';
+  document.getElementById('pi-usuario-badge').textContent=`Usuario ${U.id}`;
+  // Prellenar correo si ya viene del servidor
+  if(U.correo){
+    document.getElementById('pi-correo').value=U.correo;
+    document.getElementById('pi-correo').disabled=true;
+  }
+}
+
+function valEmailPI(i){
+  const ok=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(i.value.trim());
+  i.classList.toggle('ok',ok&&i.value.length>0);
+  i.classList.toggle('bad',!ok&&i.value.length>0);
+  document.getElementById('pi-er-correo').classList.toggle('on',!ok&&i.value.length>0);
+}
+
+async function guardarPrimerIngreso(){
+  const correo = document.getElementById('pi-correo').value.trim();
+  const nip1   = document.getElementById('pi-nip1').value.trim();
+  const nip2   = document.getElementById('pi-nip2').value.trim();
+  const erGen  = document.getElementById('pi-er-gen');
+
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)){
+    document.getElementById('pi-er-correo').classList.add('on'); return;
+  }
+  if(nip1.length<4){ erGen.textContent='El NIP debe tener al menos 4 dígitos'; erGen.classList.add('on'); return; }
+  if(nip1!==nip2){ document.getElementById('pi-er-nip').classList.add('on'); return; }
+
+  erGen.classList.remove('on');
+  try{
+    const r=await fetch(S.cfg.scriptUrl,{
+      method:'POST', mode:'no-cors',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({tipo_msg:'primer_ingreso', user_id:U.id, nip_nuevo:nip1, correo, device_id:S.cfg.deviceId||''})
+    });
+    U.correo=correo; U.nip=nip1; U.primerIngreso=false;
+    S.cfg.capturista=correo; S.cfg.username=U.username;
+    await dbPut('config',{k:'capturista',v:correo});
+    toast('✓ Acceso configurado correctamente','ok');
+    ocultarLogin();
+  }catch(e){
+    erGen.textContent='Error al guardar. Verifica tu conexión.'; erGen.classList.add('on');
+  }
+}
+
+async function cambiarNIP(){
+  const n1=document.getElementById('cfg-nip-nuevo').value.trim();
+  const n2=document.getElementById('cfg-nip-conf').value.trim();
+  const erEl=document.getElementById('er-nip');
+  if(n1.length<4){ erEl.textContent='Mínimo 4 dígitos'; erEl.classList.add('on'); return; }
+  if(n1!==n2){ erEl.textContent='Los NIP no coinciden'; erEl.classList.add('on'); return; }
+  erEl.classList.remove('on');
+  if(!navigator.onLine){ toast('Sin conexión','err'); return; }
+  try{
+    await fetch(S.cfg.scriptUrl,{
+      method:'POST', mode:'no-cors',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({tipo_msg:'cambiar_nip', user_id:U.id, nip_nuevo:n1, device_id:S.cfg.deviceId||''})
+    });
+    U.nip=n1;
+    document.getElementById('cfg-nip-nuevo').value='';
+    document.getElementById('cfg-nip-conf').value='';
+    toast('✓ NIP actualizado correctamente','ok');
+  }catch(e){ toast('Error al actualizar NIP','err'); }
+}
+
+// ══════════════════════════════════════════
 // FIX 6 — Validación de email
 // ══════════════════════════════════════════
 function valEmail(i){
@@ -1472,8 +1704,44 @@ function valEmail(i){
 }
 
 // ══════════════════════════════════════════
-// FIX 8 — ID de dispositivo único (persistente)
+// FIX 4 — testConn: se bloquea tras éxito
 // ══════════════════════════════════════════
+let connVerificada=false;
+async function testConn(){
+  const url=document.getElementById('cfg-url').value.trim();
+  if(!url){toast('Sin URL configurada','err');return;}
+  if(!navigator.onLine){toast('Sin conexión a internet','err');return;}
+  const btn=document.getElementById('btn-probar');
+  const statusEl=document.getElementById('conn-status');
+  if(btn) btn.disabled=true;
+  if(statusEl) statusEl.textContent='Verificando...';
+  try{
+    const resp=await fetch(url+'?test=1');
+    const data=await resp.json();
+    if(data.status==='OK'){
+      connVerificada=true;
+      if(btn){ btn.textContent='✓ Conectado'; btn.style.background='var(--green)'; btn.style.color='#fff'; btn.style.borderColor='var(--green)'; }
+      if(statusEl) statusEl.textContent='Conexión exitosa con el servidor central';
+      toast('✓ Conexión exitosa con el servidor','ok');
+    }else{
+      if(statusEl) statusEl.textContent='El servidor respondió con error';
+      if(btn) btn.disabled=false;
+      toast('⚠ Error en el servidor','err');
+    }
+  }catch(e){
+    if(statusEl) statusEl.textContent='No se pudo conectar';
+    if(btn) btn.disabled=false;
+    toast('⚠ Sin respuesta del servidor','err');
+  }
+}
+// Rehabilitar botón Probar si pierde conexión
+window.addEventListener('offline',()=>{
+  connVerificada=false;
+  const btn=document.getElementById('btn-probar');
+  if(btn){ btn.disabled=false; btn.textContent='Probar conexión'; btn.style.cssText=''; }
+  const statusEl=document.getElementById('conn-status');
+  if(statusEl) statusEl.textContent='Sin conexión — reconectar cuando haya señal';
+});
 async function getDeviceId(){
   let did=(await dbAll('config')).find(i=>i.k==='deviceId')?.v;
   if(!did){
@@ -1508,6 +1776,13 @@ function resetInactividad(){
 function mostrarLogin(){
   document.getElementById('login-screen').style.display='flex';
   document.getElementById('app-screen').style.display='none';
+  // Resetear formulario
+  document.getElementById('login-usuario').value='';
+  document.getElementById('login-nip').value='';
+  document.getElementById('login-err').classList.remove('on');
+  document.getElementById('login-form-card').style.display='block';
+  document.getElementById('primer-ingreso-card').style.display='none';
+  setTimeout(()=>document.getElementById('login-usuario').focus(),200);
 }
 
 function ocultarLogin(){
@@ -1557,8 +1832,21 @@ function valINE(i,cntId,erId){
   if(erId){
     const el=document.getElementById(erId);
     if(el){
-      if(!lenOk&&v.length>0) el.textContent='Debe tener exactamente 18 caracteres';
-      else if(lenOk&&!fmtOk) el.textContent='Formato inválido: 6 letras + 8 números + H/M + 3 alfanuméricos';
+      if(!lenOk&&v.length>0){
+        el.textContent=v.length<18
+          ? `Faltan ${18-v.length} caracteres — busca la clave en el anverso de tu INE`
+          : 'Demasiados caracteres — verifica la credencial';
+      } else if(lenOk&&!fmtOk){
+        // Ayuda específica según posición incorrecta
+        if(!/^[A-Z]{6}/.test(v))
+          el.textContent='Las primeras 6 posiciones deben ser letras';
+        else if(!/^[A-Z]{6}[0-9]{8}/.test(v))
+          el.textContent='Las posiciones 7-14 deben ser números';
+        else if(!/^[A-Z]{6}[0-9]{8}[HM]/.test(v))
+          el.textContent='La posición 15 debe ser H (hombre) o M (mujer)';
+        else
+          el.textContent='Las últimas 3 posiciones deben ser letras o números';
+      }
       el.classList.toggle('on',!fmtOk&&v.length>0);
     }
   }
@@ -1627,7 +1915,21 @@ function updateDash(){
 
   // Cobertura por sección (casillas)
   const secMap={};
-  S.catalogo.forEach(c=>{if(!secMap[c.seccion])secMap[c.seccion]={tot:0,cov:0};secMap[c.seccion].tot++;if(S.registros.some(x=>x.tipo_reg==='casilla'&&x.seccion===c.seccion&&x.id_casilla===c.id_casilla))secMap[c.seccion].cov++;});
+  // Cobertura por sección: prioriza estadoGlobal (servidor) si está disponible
+  const secMap={};
+  S.catalogo.forEach(c=>{
+    if(!secMap[c.seccion]) secMap[c.seccion]={tot:0,cov:0};
+    secMap[c.seccion].tot++;
+    // Verificar cobertura: primero en estadoGlobal (servidor), luego local sincronizado
+    const enServidor=S.estadoGlobal.some(x=>
+      String(x.seccion)===String(c.seccion)&&String(x.id_casilla)===String(c.id_casilla)
+    );
+    const enLocal=S.registros.some(x=>
+      x.tipo_reg==='casilla'&&x.synced&&
+      String(x.seccion)===String(c.seccion)&&x.id_casilla===c.id_casilla
+    );
+    if(enServidor||enLocal) secMap[c.seccion].cov++;
+  });
   const keys=Object.keys(secMap).sort((a,b)=>Number(a)-Number(b));
   const list=document.getElementById('cov-list');
   if(!keys.length){list.innerHTML='<div style="padding:28px;text-align:center;font-size:13px;color:var(--muted)">Descarga el catálogo para ver cobertura</div>';}
@@ -1703,32 +2005,48 @@ function updateDash(){
 // syncOne: sincroniza un registro sin bloquear la UI
 async function syncOne(reg){
   if(!S.cfg.scriptUrl||!navigator.onLine) return;
+  const actualizarEstado=async(stored,synced,err)=>{
+    stored.synced=synced; stored.sync_error=err;
+    await dbPut('registros',stored);
+    S.registros=await dbAll('registros');
+    updateDash();
+    const pend=S.registros.filter(r=>!r.synced&&!r.sync_error).length;
+    const badge=document.getElementById('sync-badge');
+    if(badge){badge.style.display=pend>0?'inline-flex':'none';badge.textContent=pend;}
+  };
+  const stored=S.registros.find(r=>r.id===reg.id)||reg;
   try{
-    await fetch(S.cfg.scriptUrl,{
-      method:'POST',mode:'no-cors',
+    // Intentar con CORS para poder leer la respuesta
+    const resp=await fetch(S.cfg.scriptUrl,{
+      method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify(reg)
     });
-    // no-cors no lanza error si llega — marcamos como sincronizado
-    const stored=S.registros.find(r=>r.id===reg.id)||reg;
-    stored.synced=true; stored.sync_error=null;
-    await dbPut('registros',stored);
-    // Actualizar solo los contadores sin re-renderizar toda la lista
-    S.registros=await dbAll('registros');
-    updateDash();
-    // Actualizar badge del botón sync
-    const pend=S.registros.filter(r=>!r.synced&&!r.sync_error).length;
-    const badge=document.getElementById('sync-badge');
-    if(badge) badge.style.display=pend>0?'inline-flex':'none';
-    if(badge) badge.textContent=pend;
-    toast('✓ Registro guardado y sincronizado','ok');
-  }catch(e){
-    const stored=S.registros.find(r=>r.id===reg.id)||reg;
-    stored.sync_error='Error de red';
-    await dbPut('registros',stored);
-    S.registros=await dbAll('registros');
-    updateDash();
-    toast('✓ Guardado localmente — sin conexión','');
+    const data=await resp.json();
+    if(data.status==='OK'){
+      await actualizarEstado(stored,true,null);
+      toast('✓ Registro guardado y sincronizado','ok');
+    } else if(data.status==='DUPLICATE'){
+      await actualizarEstado(stored,false,'DUPLICADO EN SERVIDOR: '+data.message);
+      toast('⚠ '+data.message,'err',5000);
+    } else {
+      await actualizarEstado(stored,false,data.message||'Error del servidor');
+      toast('Error: '+data.message,'err');
+    }
+  }catch(corsErr){
+    // CORS bloqueado — fallback a no-cors
+    try{
+      await fetch(S.cfg.scriptUrl,{
+        method:'POST',mode:'no-cors',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(reg)
+      });
+      await actualizarEstado(stored,true,null);
+      toast('✓ Guardado y enviado al servidor','ok');
+    }catch(e){
+      await actualizarEstado(stored,false,'Sin conexion');
+      toast('Sin conexion — guardado localmente','');
+    }
   }
 }
 
@@ -1965,38 +2283,49 @@ async function init(){
   await loadCatalogo();
   await loadReg();
 
-  // Fix 8 — deviceId
-  S.cfg.deviceId=await getDeviceId();
-
-  // Fix 10 — Mostrar pantalla de login si hay PIN configurado
-  if(S.cfg.pin){
-    const pm=document.getElementById('pin-muni-lbl');
-    if(pm&&S.cfg.municipio) pm.textContent=S.cfg.municipio;
-    // login-screen ya visible por defecto
-  }else{
-    // Sin PIN configurado → entrar directo
-    ocultarLogin();
+  // FIX 4 — URL precargada desde parametro (nunca visible al capturista)
+  const urlParams=new URLSearchParams(window.location.search);
+  // Acepta tanto ?srv= como ?svr= (tolerancia a error tipográfico)
+  const srvParam = urlParams.get('srv') || urlParams.get('svr');
+  if(srvParam){
+    const srvUrl=decodeURIComponent(srvParam);
+    S.cfg.scriptUrl=srvUrl;
+    await dbPut('config',{k:'scriptUrl',v:srvUrl});
+    document.getElementById('cfg-url').value=srvUrl;
+    window.history.replaceState({},'',window.location.pathname);
+  }
+  if(urlParams.get('par')){
+    const par=decodeURIComponent(urlParams.get('par'));
+    S.cfg.partidos=par;
+    await dbPut('config',{k:'partidos',v:par});
+    document.getElementById('cfg-par').value=par;
   }
 
-  // Fix 11 — Reset de inactividad en cualquier interacción
+  // FIX 8 — deviceId
+  S.cfg.deviceId=await getDeviceId();
+
+  // FIX 10,11 — Sistema de usuarios: siempre mostrar login
+  if(!S.cfg.scriptUrl){
+    ocultarLogin(); // Sin URL = primer arranque tecnico
+  } else if(sesionActiva && U.id){
+    ocultarLogin(); // Sesion activa en memoria
+  } else {
+    mostrarLogin(); // Pedir credenciales
+  }
+
   ['click','touchstart','keydown','scroll'].forEach(ev=>{
     document.addEventListener(ev,resetInactividad,{passive:true});
   });
-
-  // Cerrar dropdowns de búsqueda al click fuera
   document.addEventListener('click',e=>{
     if(!e.target.closest('#c-sec-search')&&!e.target.closest('#c-sec-res'))
-      document.getElementById('c-sec-res').classList.remove('open');
+      document.getElementById('c-sec-res')?.classList.remove('open');
     if(!e.target.closest('#g-sec-search')&&!e.target.closest('#g-sec-res'))
-      document.getElementById('g-sec-res').classList.remove('open');
+      document.getElementById('g-sec-res')?.classList.remove('open');
     if(!e.target.closest('#q-sec-search')&&!e.target.closest('#q-sec-res'))
-      document.getElementById('q-sec-res').classList.remove('open');
+      document.getElementById('q-sec-res')?.classList.remove('open');
   });
-
-  window.addEventListener('online',()=>toast('Conexión restaurada','ok'));
-  window.addEventListener('offline',()=>toast('Sin conexión — modo sin internet',''));
-
-  // Auto-descarga catálogo si hace falta
+  window.addEventListener('online',()=>toast('Conexion restaurada','ok'));
+  window.addEventListener('offline',()=>toast('Sin conexion — modo sin internet',''));
   if(S.cfg.scriptUrl&&S.catalogo.length===0&&navigator.onLine) await descargarCatalogo();
 }
 init();
