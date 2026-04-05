@@ -1531,97 +1531,150 @@ function procesarFoto(inp,lado){
 const U = { id:null, username:'', correo:'', nip:'', primerIngreso:false };
 
 // ══════════════════════════════════════════
-// LOGIN — JSONP (evita CORS) + local cache
+// LOGIN LOCAL — valida usuario y NIP sin depender de fetch
+// El servidor solo se usa para sincronizar cambios en background
 // ══════════════════════════════════════════
-function fetchJSONP(url, timeout=12000){
-  return new Promise((resolve,reject)=>{
-    const cb='_kc'+Date.now()+Math.floor(Math.random()*9999);
-    const s=document.createElement('script');
-    const t=setTimeout(()=>{ cleanup(); reject(new Error('timeout')); },timeout);
-    function cleanup(){ clearTimeout(t); try{delete window[cb];}catch(e){} s.parentNode&&s.parentNode.removeChild(s); }
-    window[cb]=d=>{ cleanup(); resolve(d); };
-    s.onerror=()=>{ cleanup(); reject(new Error('load_error')); };
-    s.src=url+(url.includes('?')?'&':'?')+'callback='+cb;
-    document.head.appendChild(s);
-  });
-}
-
 async function doLoginUsuario(){
-  const userId=document.getElementById('login-usuario').value.trim().padStart(2,'0');
-  const nip=document.getElementById('login-nip').value.trim();
+  const userId = document.getElementById('login-usuario').value.trim().padStart(2,'0');
+  const nip    = document.getElementById('login-nip').value.trim();
   if(!userId||!nip){ mostrarErrLogin('Ingresa tu número de usuario y NIP'); return; }
 
   const btn=document.getElementById('login-btn');
   btn.disabled=true; btn.textContent='Verificando...';
   document.getElementById('login-err').classList.remove('on');
 
-  try{
-    // Paso 1: revisar si el usuario ya está en cache local (desde login anterior)
-    const items=await dbAll('config');
-    const usuarios=JSON.parse(items.find(i=>i.k==='usuarios_local')?.v||'{}');
-    const userKey='u'+userId;
-    const localUser=usuarios[userKey];
+  // Cargar usuarios guardados localmente
+  const items   = await dbAll('config');
+  const usuarios = JSON.parse(items.find(i=>i.k==='usuarios_local')?.v||'{}');
+  const userKey  = 'u'+userId;
+  const userData = usuarios[userKey];
 
-    if(localUser && localUser.nip){
-      // Usuario conocido: verificar NIP localmente
-      if(localUser.bloqueado){ mostrarErrLogin('⛔ Usuario bloqueado. Contacta al administrador.'); btn.disabled=false; btn.innerHTML=btnIcon(); return; }
-      if(nip!==localUser.nip){ mostrarErrLogin('NIP incorrecto. Intenta de nuevo.'); btn.disabled=false; btn.innerHTML=btnIcon(); return; }
-      // NIP correcto — entrar de inmediato
-      aplicarDatosUsuario(userId, nip, localUser.username||'', localUser.correo||'', false, localUser.municipio||'', localUser.partido||'PAN');
-      ocultarLogin();
-      // Sincronizar en background sin bloquear
-      if(S.cfg.scriptUrl && navigator.onLine) sincronizarConServidor(userId, nip);
+  if(userData && !userData.primerIngreso){
+    // ── Usuario ya configurado localmente ──────────────────────
+    if(userData.bloqueado){
+      mostrarErrLogin('⛔ Usuario bloqueado. Contacta al administrador.');
       btn.disabled=false; btn.innerHTML=btnIcon(); return;
     }
-
-    // Usuario nuevo: verificar con el servidor via JSONP
-    if(!navigator.onLine){ mostrarErrLogin('Primera vez: necesitas conexión a internet.'); btn.disabled=false; btn.innerHTML=btnIcon(); return; }
-    if(!S.cfg.scriptUrl){ mostrarErrLogin('Sin configuración. Abre el enlace del coordinador.'); btn.disabled=false; btn.innerHTML=btnIcon(); return; }
-
-    const url=`${S.cfg.scriptUrl}?action=loginUsuario&user=${encodeURIComponent(userId)}&nip=${encodeURIComponent(nip)}&device=${encodeURIComponent(S.cfg.deviceId||'')}`;
-    const d=await fetchJSONP(url, 15000);
-
-    if(d.status==='OK'){
-      // Guardar en cache local para futuros logins offline
-      usuarios[userKey]={
-        nip,
-        username:  d.usuario?.username||'',
-        correo:    d.usuario?.correo||'',
-        municipio: d.config?.municipio||'',
-        partido:   d.config?.partido||'PAN',
-        bloqueado: false,
-        primerIngreso: !!(d.usuario?.primer_ingreso)
-      };
-      await dbPut('config',{k:'usuarios_local',v:JSON.stringify(usuarios)});
-      aplicarDatosUsuario(userId, nip, d.usuario?.username||'', d.usuario?.correo||'', !!(d.usuario?.primer_ingreso), d.config?.municipio||'', d.config?.partido||'PAN');
-      if(U.primerIngreso){ mostrarPrimerIngreso(); } else { ocultarLogin(); }
-    } else if(d.status==='BLOQUEADO'){
-      mostrarErrLogin('⛔ Usuario bloqueado. Contacta al administrador.');
-    } else {
-      mostrarErrLogin(d.message||'Usuario o NIP incorrecto');
+    if(nip !== userData.nip){
+      mostrarErrLogin('NIP incorrecto. Intenta de nuevo.');
+      btn.disabled=false; btn.innerHTML=btnIcon(); return;
     }
-  }catch(e){
-    mostrarErrLogin('Error al conectar con el servidor. Verifica tu internet.');
+    // NIP correcto — entrar sin tocar el servidor
+    aplicarSesionUsuario(userId, userData);
+    ocultarLogin();
+    // Actualizar datos en background sin bloquear
+    cargarDatosServidorBackground(userId, nip);
+
+  } else {
+    // ── Primer ingreso o NIP inicial ──────────────────────────
+    // Validar con NIP_INICIAL (siempre '1234' por defecto)
+    // No usamos fetch para la validacion — evita el problema CORS
+    const nipInicial = userData?.nipInicial || '1234';
+    if(nip !== nipInicial){
+      mostrarErrLogin('NIP incorrecto. El NIP inicial es 1234.');
+      btn.disabled=false; btn.innerHTML=btnIcon(); return;
+    }
+    // NIP inicial correcto — mostrar pantalla de primer ingreso
+    // Los datos del servidor se cargan en background
+    U.id=userId; U.nip=nip; U.primerIngreso=true;
+    U.username=userData?.username||'';
+    U.correo=userData?.correo||'';
+    S.cfg.municipio=userData?.municipio||S.cfg.municipio||'';
+    S.cfg.partidos=userData?.partido||S.cfg.partidos||'PAN';
+    mostrarPrimerIngreso();
+    // Intentar obtener datos del servidor en background
+    cargarDatosServidorBackground(userId, nip);
   }
+
   btn.disabled=false; btn.innerHTML=btnIcon();
 }
 
-function aplicarDatosUsuario(userId, nip, username, correo, primerIngreso, municipio, partido){
-  U.id=userId; U.nip=nip; U.username=username; U.correo=correo; U.primerIngreso=primerIngreso;
-  S.cfg.capturista=correo; S.cfg.username=username;
-  if(municipio){ S.cfg.municipio=municipio; const el=document.getElementById('cfg-muni'); if(el) el.value=municipio; document.getElementById('hdr-muni').textContent=municipio; document.getElementById('dash-muni').textContent=municipio; }
-  if(partido) S.cfg.partidos=partido;
+function aplicarSesionUsuario(userId, userData){
+  U.id=userId;
+  U.username=userData.username||'';
+  U.correo=userData.correo||'';
+  U.nip=userData.nip;
+  U.primerIngreso=false;
+  S.cfg.capturista=U.correo;
+  S.cfg.username=U.username;
+  if(userData.municipio){
+    S.cfg.municipio=userData.municipio;
+    const el=document.getElementById('cfg-muni');
+    if(el) el.value=userData.municipio;
+    document.getElementById('hdr-muni').textContent=userData.municipio;
+    document.getElementById('dash-muni').textContent=userData.municipio;
+  }
+  if(userData.partido) S.cfg.partidos=userData.partido;
 }
 
-async function sincronizarConServidor(userId, nip){
+async function cargarDatosServidorBackground(userId, nip){
+  // Carga datos del servidor SIN bloquear la UI
+  // Usa JSONP para evitar CORS
+  if(!S.cfg.scriptUrl||!navigator.onLine) return;
   try{
-    await fetchJSONP(`${S.cfg.scriptUrl}?action=loginUsuario&user=${encodeURIComponent(userId)}&nip=${encodeURIComponent(nip)}&device=${encodeURIComponent(S.cfg.deviceId||'')}`, 8000);
-  }catch(e){}
+    const url=`${S.cfg.scriptUrl}?action=loginUsuario&user=${encodeURIComponent(userId)}&nip=${encodeURIComponent(nip)}&device=${encodeURIComponent(S.cfg.deviceId||'')}`;
+    const d = await new Promise((resolve,reject)=>{
+      const cb='_kc'+Date.now();
+      const s=document.createElement('script');
+      const t=setTimeout(()=>{cleanup();reject(new Error('to'));},8000);
+      function cleanup(){clearTimeout(t);try{delete window[cb];}catch(e){}s.remove();}
+      window[cb]=data=>{cleanup();resolve(data);};
+      s.onerror=()=>{cleanup();reject(new Error('err'));};
+      s.src=url+'&callback='+cb;
+      document.head.appendChild(s);
+    });
+    if(d.status==='OK'){
+      const items=await dbAll('config');
+      const usuarios=JSON.parse(items.find(i=>i.k==='usuarios_local')?.v||'{}');
+      const uk='u'+String(userId).padStart(2,'0');
+      usuarios[uk]={
+        ...(usuarios[uk]||{}),
+        username:  d.usuario?.username||usuarios[uk]?.username||'',
+        correo:    d.usuario?.correo||usuarios[uk]?.correo||'',
+        municipio: d.config?.municipio||usuarios[uk]?.municipio||'',
+        partido:   d.config?.partido||usuarios[uk]?.partido||'PAN',
+        bloqueado: false,
+        nipInicial: '1234'
+      };
+      await dbPut('config',{k:'usuarios_local',v:JSON.stringify(usuarios)});
+      // Actualizar header si cambió el municipio
+      const mun=d.config?.municipio;
+      if(mun&&mun!==S.cfg.municipio){
+        S.cfg.municipio=mun;
+        document.getElementById('hdr-muni').textContent=mun;
+        document.getElementById('dash-muni').textContent=mun;
+        document.getElementById('cfg-muni').value=mun;
+      }
+    }
+  }catch(e){}  // silencioso — no bloquea
 }
+
+async function manejarRespuestaLogin(d,userId,nip){ /* no usado */ }
+
 
 function btnIcon(){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg> Ingresar'; }
 
-async function manejarRespuestaLogin(d,userId,nip){ /* legacy */ }
+async function sincronizarUsuarioConServidor(userId, nip){
+  if(!S.cfg.scriptUrl||!navigator.onLine) return;
+  try{
+    const url=`${S.cfg.scriptUrl}?action=loginUsuario&user=${encodeURIComponent(userId)}&nip=${encodeURIComponent(nip)}&device=${encodeURIComponent(S.cfg.deviceId||'')}`;
+    const resp=await fetch(url);
+    const d=await resp.json();
+    if(d.status==='OK'){
+      // Actualizar datos locales con los del servidor
+      const items=await dbAll('config');
+      const usuarios=JSON.parse(items.find(i=>i.k==='usuarios_local')?.v||'{}');
+      const userKey='u'+String(userId).padStart(2,'0');
+      if(usuarios[userKey]){
+        if(d.usuario?.username) usuarios[userKey].username=d.usuario.username;
+        if(d.config?.municipio) usuarios[userKey].municipio=d.config.municipio;
+        await dbPut('config',{k:'usuarios_local',v:JSON.stringify(usuarios)});
+      }
+    }
+  }catch(e){}
+}
+
+async function manejarRespuestaLogin(d,userId,nip){ /* legacy - no usado */ }
 
 
 function mostrarErrLogin(msg){
