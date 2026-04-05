@@ -319,6 +319,12 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
 .consulta-hdr{background:var(--navy);border-radius:var(--r);padding:16px;margin-bottom:16px;color:#fff}
 .consulta-hdr h2{font-family:var(--fh);font-size:20px;font-weight:700;margin-bottom:3px}
 .consulta-hdr p{font-size:12px;color:rgba(255,255,255,.55)}
+/* Fix 1 — Casilla seleccionada en CONSULTA con alto contraste */
+#q-cas-grid .cas-chip{background:var(--surface);border:1.5px solid var(--border);transition:all .15s}
+#q-cas-grid .cas-chip:hover{border-color:var(--navy);background:#eef2ff}
+#q-cas-grid .cas-chip.sel{background:var(--navy)!important;border:2.5px solid var(--red)!important;color:#fff!important;box-shadow:0 3px 10px rgba(26,39,68,.4);transform:scale(1.05)}
+#q-cas-grid .cas-chip.sel .cid{color:#fff!important;font-size:19px}
+#q-cas-grid .cas-chip.sel .ctp{color:rgba(255,255,255,.75)!important}
 .consulta-result{margin-top:16px}
 .result-card{background:var(--surface);border-radius:var(--r);overflow:hidden;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
 .result-hdr{padding:12px 16px;display:flex;align-items:center;gap:10px}
@@ -517,7 +523,7 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
       <!-- BANNER ESTADO GLOBAL -->
       <div class="estado-bar" id="estado-bar">
         <div class="dot dot-no" id="estado-dot"></div>
-        <span id="estado-txt">Sin estado de Sheets</span>
+        <span id="estado-txt">Sin estado del servidor</span>
         <button onclick="descargarEstado()" id="estado-btn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
           Actualizar estado
@@ -529,8 +535,8 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
         <div class="leyenda">
           <div class="ley-item"><div class="ley-box lb-libre"></div>Libre</div>
           <div class="ley-item"><div class="ley-box lb-local"></div>Capturado local</div>
-          <div class="ley-item"><div class="ley-box lb-parcial"></div>Parcial (Sheets)</div>
-          <div class="ley-item"><div class="ley-box lb-llena"></div>Completa (Sheets)</div>
+          <div class="ley-item"><div class="ley-box lb-parcial"></div>Parcial (servidor)</div>
+          <div class="ley-item"><div class="ley-box lb-llena"></div>Completa (servidor)</div>
         </div>
         <div class="cas-grid" id="c-cas-grid"></div>
       </div>
@@ -561,13 +567,13 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
             <div class="rol-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
             <h4>Propietario</h4>
             <p>Representante titular</p>
-            <div class="rol-bloq-lbl" id="bloq-prop" style="display:none">Ya asignado en Sheets</div>
+            <div class="rol-bloq-lbl" id="bloq-prop" style="display:none">Ya asignado en servidor</div>
           </div>
           <div class="rol-card" id="rol-sup" onclick="selRolSiDisponible('SUPLENTE',this)">
             <div class="rol-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
             <h4>Suplente</h4>
             <p>Representante alterno</p>
-            <div class="rol-bloq-lbl" id="bloq-sup" style="display:none">Ya asignado en Sheets</div>
+            <div class="rol-bloq-lbl" id="bloq-sup" style="display:none">Ya asignado en servidor</div>
           </div>
         </div>
         <div class="errmsg" id="er-rol">Selecciona un rol</div>
@@ -795,12 +801,17 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
   <div class="cfg-s">
     <div class="cfg-card">
       <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>Municipio</h3>
-      <div class="fld"><label>Municipio</label><input type="text" id="cfg-muni" placeholder="Ej. San Andrés Cholula" oninput="saveCfg()"></div>
+      <div class="fld"><label>Municipio</label><input type="text" id="cfg-muni" placeholder="Ej. San Andres Cholula" oninput="saveCfg()"></div>
+      <div class="fld">
+        <label>Nombre de usuario</label>
+        <input type="text" id="cfg-user" placeholder="Ej. capturista01 o nombre" oninput="saveCfg()" autocomplete="username">
+        <div class="hint">Identificador corto del capturista en los registros</div>
+      </div>
       <div class="fld">
         <label>Correo del capturista</label>
         <input type="email" id="cfg-cap" placeholder="capturista@correo.com" oninput="valEmail(this);saveCfg()" autocomplete="email" inputmode="email">
-        <div class="hint">Identifica quién realizó cada captura</div>
-        <div class="errmsg" id="er-cap">Ingresa un correo electrónico válido</div>
+        <div class="hint">Para contacto y auditoria de capturas</div>
+        <div class="errmsg" id="er-cap">Ingresa un correo electronico valido</div>
       </div>
     </div>
     <div class="cfg-card">
@@ -867,7 +878,7 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
   <div class="consulta-wrap">
     <div class="consulta-hdr">
       <h2>Consulta de Casilla</h2>
-      <p>Busca quién está asignado a cualquier casilla en Sheets</p>
+      <p>Busca quien esta asignado a cualquier casilla en el servidor</p>
     </div>
 
     <div class="fld">
@@ -886,7 +897,7 @@ body{font-family:var(--fb);color:var(--text);font-size:15px;line-height:1.5}
 
     <button class="btn btn-primary" id="q-btn-consultar" onclick="consultarCasilla()" disabled style="margin-top:4px">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-      Consultar en Sheets
+      Consultar en servidor
     </button>
 
     <div class="consulta-result" id="q-result"></div>
@@ -912,7 +923,7 @@ const S={
   catalogo:[], registros:[], filtro:'all',
   // estado global desde Sheets
   estadoGlobal:[], generalesGlobal:[], estadoTs:null,
-  cfg:{municipio:'',capturista:'',scriptUrl:'',partidos:'MORENA'}
+  cfg:{municipio:'',capturista:'',username:'',scriptUrl:'',partidos:'PAN',pin:'',inact:'30',deviceId:''}
 };
 
 // ══════════════════════════════════════════
@@ -945,11 +956,12 @@ async function loadCfg(){
   items.forEach(i=>S.cfg[i.k]=i.v);
   document.getElementById('cfg-muni').value=S.cfg.municipio||'';
   document.getElementById('cfg-cap').value=S.cfg.capturista||'';
+  const uel=document.getElementById('cfg-user');
+  if(uel) uel.value=S.cfg.username||'';
   document.getElementById('cfg-url').value=S.cfg.scriptUrl||'';
-  document.getElementById('cfg-par').value=S.cfg.partidos||'MORENA';
+  document.getElementById('cfg-par').value=S.cfg.partidos||'PAN';
   if(document.getElementById('cfg-pin')) document.getElementById('cfg-pin').value=S.cfg.pin||'';
   if(document.getElementById('cfg-inact')) document.getElementById('cfg-inact').value=S.cfg.inact||'30';
-  // Mostrar deviceId
   const did=await getDeviceId();
   S.cfg.deviceId=did;
   const elDid=document.getElementById('cfg-device-id');
@@ -961,6 +973,8 @@ async function loadCfg(){
 async function saveCfg(){
   S.cfg.municipio=document.getElementById('cfg-muni').value.trim();
   S.cfg.capturista=document.getElementById('cfg-cap').value.trim();
+  const uel=document.getElementById('cfg-user');
+  if(uel) S.cfg.username=uel.value.trim();
   S.cfg.scriptUrl=document.getElementById('cfg-url').value.trim();
   S.cfg.partidos=document.getElementById('cfg-par').value.trim();
   const pinEl=document.getElementById('cfg-pin');
@@ -969,7 +983,6 @@ async function saveCfg(){
   if(inactEl) S.cfg.inact=inactEl.value;
   for(const[k,v]of Object.entries(S.cfg)) await dbPut('config',{k,v});
   refreshHdr();
-  // Actualizar label del municipio en pantalla de login
   const pm=document.getElementById('pin-muni-lbl');
   if(pm&&S.cfg.municipio) pm.textContent=S.cfg.municipio;
 }
@@ -1088,7 +1101,7 @@ async function guardarCasilla(){
   if(S.registros.some(r=>r.tipo_reg==='casilla'&&String(r.seccion)===String(S.cSeccion.seccion)&&r.id_casilla===S.cCasilla.id_casilla&&r.rol===S.cRol&&r.partido===S.cPartido)){
     toast('⚠ Ya existe ese rol/partido en esta casilla','err');return;
   }
-  const reg={tipo_reg:'casilla',seccion:S.cSeccion.seccion,id_casilla:S.cCasilla.id_casilla,tipo_casilla:S.cCasilla.tipo_casilla,nombre:`${nom} ${pat} ${mat}`.trim(),nombre_p:nom,ap_pat:pat,ap_mat:mat,ine,telefono:telF,rol:S.cRol,partido:S.cPartido,notas:not,foto_frente:S.fotoFrente||null,foto_reverso:S.fotoReverso||null,capturado_por:S.cfg.capturista||'Anonimo',device_id:S.cfg.deviceId||'',timestamp:new Date().toISOString(),synced:false,sync_error:null};
+  const reg={tipo_reg:'casilla',seccion:S.cSeccion.seccion,id_casilla:S.cCasilla.id_casilla,tipo_casilla:S.cCasilla.tipo_casilla,nombre:`${nom} ${pat} ${mat}`.trim(),nombre_p:nom,ap_pat:pat,ap_mat:mat,ine,telefono:telF,rol:S.cRol,partido:S.cPartido,notas:not,foto_frente:S.fotoFrente||null,foto_reverso:S.fotoReverso||null,capturado_por:S.cfg.capturista||'',username:S.cfg.username||'',device_id:S.cfg.deviceId||'',timestamp:new Date().toISOString(),synced:false,sync_error:null};
   const id=await dbPut('registros',reg);
   reg.id=id;
   await loadReg();
@@ -1197,7 +1210,8 @@ async function guardarGeneral(){
     tipo_reg:'general', secciones:S.gSecciones,
     nombre:`${nom} ${pat} ${mat}`.trim(), nombre_p:nom, ap_pat:pat, ap_mat:mat,
     ine, telefono:telF, partido:S.gPartido, notas:not,
-    capturado_por:S.cfg.capturista||'Anonimo',
+    capturado_por:S.cfg.capturista||'',
+    username:S.cfg.username||'',
     device_id:S.cfg.deviceId||'',
     timestamp:new Date().toISOString(), synced:false, sync_error:null
   };
@@ -1311,7 +1325,7 @@ function actualizarBannerEstado(){
   if(!dot||!txt) return;
   if(!S.estadoTs){
     dot.className='dot dot-no';
-    txt.textContent='Sin estado de Sheets — toca Actualizar';
+    txt.textContent='Sin estado del servidor — toca Actualizar';
   }else{
     const mins=Math.round((new Date()-S.estadoTs)/60000);
     dot.className='dot dot-ok';
@@ -1968,22 +1982,36 @@ async function init(){
   // Fix 8 — deviceId
   S.cfg.deviceId=await getDeviceId();
 
-  // Fix 10 — Mostrar pantalla de login si hay PIN configurado
+  // Verificar reset de PIN remoto y registrar dispositivo
+  if(S.cfg.scriptUrl && S.cfg.deviceId && navigator.onLine){
+    try{
+      const r=await fetch(`${S.cfg.scriptUrl}?action=checkpin&device=${encodeURIComponent(S.cfg.deviceId)}`);
+      const d=await r.json();
+      if(d.reset_pin===true){
+        S.cfg.pin='';
+        await dbPut('config',{k:'pin',v:''});
+        toast('PIN reseteado por el administrador','warn');
+      }
+    }catch(e){}
+    try{
+      await fetch(S.cfg.scriptUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({tipo_msg:'registro_dispositivo',device_id:S.cfg.deviceId,username:S.cfg.username||'',municipio:S.cfg.municipio||''})});
+    }catch(e){}
+  }
+
+  // Fix 10 — PIN
   if(S.cfg.pin){
     const pm=document.getElementById('pin-muni-lbl');
     if(pm&&S.cfg.municipio) pm.textContent=S.cfg.municipio;
-    // login-screen ya visible por defecto
   }else{
-    // Sin PIN configurado → entrar directo
     ocultarLogin();
   }
 
-  // Fix 11 — Reset de inactividad en cualquier interacción
+  // Fix 11 — Inactividad
   ['click','touchstart','keydown','scroll'].forEach(ev=>{
     document.addEventListener(ev,resetInactividad,{passive:true});
   });
 
-  // Cerrar dropdowns de búsqueda al click fuera
   document.addEventListener('click',e=>{
     if(!e.target.closest('#c-sec-search')&&!e.target.closest('#c-sec-res'))
       document.getElementById('c-sec-res').classList.remove('open');
@@ -1993,10 +2021,9 @@ async function init(){
       document.getElementById('q-sec-res').classList.remove('open');
   });
 
-  window.addEventListener('online',()=>toast('Conexión restaurada','ok'));
-  window.addEventListener('offline',()=>toast('Sin conexión — modo sin internet',''));
+  window.addEventListener('online',()=>toast('Conexion restaurada','ok'));
+  window.addEventListener('offline',()=>toast('Sin conexion — modo sin internet',''));
 
-  // Auto-descarga catálogo si hace falta
   if(S.cfg.scriptUrl&&S.catalogo.length===0&&navigator.onLine) await descargarCatalogo();
 }
 init();
